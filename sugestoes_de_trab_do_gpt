@@ -1,0 +1,232 @@
+1. Jogo de Corrida Simples
+Descrição: Um jogo de corrida em terceira pessoa com um carro que deve desviar de obstáculos ou coletar itens em um circuito.
+
+Requisitos atendidos:
+
+Malhas poligonais: Carro, pista e obstáculos (usando modelos como cow.obj ou similares).
+
+Transformações: Movimento do carro (rotação, translação) controlado pelo teclado (setas ou WASD).
+
+Câmeras: Câmera livre (visão do jogador) e câmera look-at (visão lateral fixa).
+
+Colisões: Teste cubo-cubo (carro vs. obstáculos), cubo-plano (carro vs. pista), ponto-esfera (coleta de itens).
+
+Iluminação: Phong e Gouraud para diferentes objetos (ex: carro com Phong, pista com Gouraud).
+
+Texturas: Texturas para o carro, pista e obstáculos.
+
+Curva de Bézier: Movimento de um obstáculo ou item ao longo de uma curva.
+
+Tempo: Movimento baseado em Δt para garantir velocidade constante.
+
+2. Simulador de Sistema Solar
+Descrição: Um modelo interativo do sistema solar com planetas orbitando o sol.
+
+Requisitos atendidos:
+
+Malhas poligonais: Planetas e sol (esferas ou modelos complexos).
+
+Transformações: Rotação dos planetas e translação nas órbitas (controlável pelo teclado para acelerar/desacelerar).
+
+Câmeras: Câmera livre (navegação pelo espaço) e câmera look-at (focada no sol ou em um planeta).
+
+Colisões: Teste esfera-esfera (planetas vs. asteroides), cubo-plano (nave vs. plano de órbitas), ponto-esfera (seleção de planeta com mouse).
+
+Iluminação: Iluminação difusa (sol como fonte de luz) e Blinn-Phong para planetas.
+
+Texturas: Texturas realistas para planetas (ex: Terra, Marte).
+
+Curva de Bézier: Órbita de um cometa ou asteroide.
+
+Tempo: Movimento orbital baseado em Δt.
+
+3. Labirinto 3D com Coleta de Itens
+Descrição: Um labirinto 3D onde o jogador deve coletar itens para vencer.
+
+Requisitos atendidos:
+
+Malhas poligonais: Labirinto (paredes e chão) e itens (modelos como cow.obj ou esferas).
+
+Transformações: Movimento do jogador (teclado) e rotação da câmera (mouse).
+
+Câmeras: Câmera livre (em primeira pessoa) e câmera look-at (visão de cima).
+
+Colisões: Cubo-cubo (jogador vs. paredes), cubo-plano (jogador vs. chão), ponto-esfera (coleta de itens).
+
+Iluminação: Iluminação difusa (ambiente) e Blinn-Phong para itens.
+
+Texturas: Texturas para paredes, chão e itens.
+
+Curva de Bézier: Movimento de um inimigo ou item ao longo de um caminho curvo.
+
+Tempo: Movimento baseado em Δt.
+
+4. Jogo de Tiro ao Alvo com Arco e Flecha
+Descrição: Um jogo onde o jogador controla um arco para acertar alvos em movimento.
+
+Requisitos atendidos:
+
+Malhas poligonais: Arco, flecha e alvos (modelos complexos).
+
+Transformações: Rotação do arco (teclado/mouse) e movimento da flecha (lançamento).
+
+Câmeras: Câmera livre (visão do jogador) e câmera look-at (visão lateral).
+
+Colisões: Cubo-cubo (flecha vs. alvo), cubo-plano (flecha vs. chão), ponto-esfera (seleção de alvo).
+
+Iluminação: Blinn-Phong para o arco e alvos, Gouraud para o ambiente.
+
+Texturas: Texturas para o arco, flecha e alvos.
+
+Curva de Bézier: Trajetória da flecha (parabólica).
+
+Tempo: Movimento dos alvos e flecha baseado em Δt.
+
+5. Simulador de Parque de Diversões
+Descrição: Um parque com atrações como roda-gigante e montanha-russa, controláveis pelo usuário.
+
+Requisitos atendidos:
+
+Malhas poligonais: Modelos das atrações (ex: carrinhos da montanha-russa).
+
+Transformações: Movimento das atrações (teclado para ligar/desligar).
+
+Câmeras: Câmera livre (navegação pelo parque) e câmera look-at (focada em uma atração).
+
+Colisões: Cubo-cubo (carrinhos vs. trilhos), cubo-plano (atrações vs. chão), ponto-esfera (seleção de atrações).
+
+Iluminação: Iluminação difusa (dia/noite) e Blinn-Phong para atrações.
+
+Texturas: Texturas para atrações e ambiente.
+
+Curva de Bézier: Trilho da montanha-russa.
+
+Tempo: Animação das atrações baseada em Δt.
+
+6. Jogo de Futebol Simplificado
+Descrição: Um jogo de futebol em 3D com dois jogadores (controlados por teclado) e uma bola.
+
+Requisitos:
+
+Malhas: Jogadores (modelos humanos simples), bola e campo.
+
+Transformações: Movimento dos jogadores e física da bola (teclado).
+
+Câmeras: Câmera livre (visão do jogador) e câmera look-at (visão de cima).
+
+Colisões: Esfera-esfera (bola vs. jogadores), cubo-plano (bola vs. chão), ponto-esfera (gol).
+
+Curva de Bézier: Trajetória da bola após um chute.
+
+Texturas: Campo gramado, jogadores com uniformes.
+
+7. Caça ao Tesouro Subaquático
+Descrição: Um mergulhador controlado pelo usuário coleta tesouros no fundo do mar, evitando obstáculos como tubarões.
+
+Requisitos:
+
+Malhas: Mergulhador, peixes, tesouros, corais (usando modelos complexos).
+
+Câmeras: Câmera livre (visão do mergulhador) e câmera look-at (visão lateral).
+
+Colisões: Cubo-cubo (mergulhador vs. tubarão), cubo-plano (mergulhador vs. fundo do mar).
+
+Curva de Bézier: Movimento de um peixe ou tesouro flutuando.
+
+Iluminação: Efeito de luz aquática (Blinn-Phong com cor azulada).
+
+8. Torre de Hanói 3D Interativa
+Descrição: Versão 3D do clássico jogo de lógica, com discos que devem ser movidos entre torres.
+
+Requisitos:
+
+Malhas: Discos e torres (cilindros e modelos estilizados).
+
+Transformações: Movimento dos discos (arrastar com mouse).
+
+Colisões: Cubo-cubo (teste para validar movimentos válidos).
+
+Câmeras: Câmera livre (rotacionar a cena) e câmera look-at (visão fixa).
+
+Texturas: Madeira para as torres, cores diferentes para os discos.
+
+9. Simulador de Voo de Pássaro
+Descrição: O usuário controla um pássaro que deve coletar frutas em um ambiente aberto, evitando obstáculos.
+
+Requisitos:
+
+Malhas: Pássaro, árvores, frutas (modelos complexos).
+
+Câmeras: Câmera em primeira pessoa (visão do pássaro) e câmera look-at (visão externa).
+
+Curva de Bézier: Trajetória de voo do pássaro ao planar.
+
+Colisões: Cubo-cubo (pássaro vs. árvores), ponto-esfera (coleta de frutas).
+
+10. Quebra-Cabeça Deslizante 3D
+Descrição: Um quebra-cabeça onde peças deslizantes devem ser organizadas (como o "15-puzzle", mas em 3D).
+
+Requisitos:
+
+Malhas: Peças cubóides com texturas de imagem cortada.
+
+Transformações: Movimento das peças (teclado/mouse).
+
+Colisões: Cubo-cubo (teste para evitar sobreposições).
+
+Câmeras: Câmera livre (rotacionar o puzzle) e câmera look-at (visão frontal).
+
+11. Jogo de Tiro com Asteroides
+Descrição: Uma nave espacial deve destruir asteroides que se aproximam, usando tiros (teclado/mouse).
+
+Requisitos:
+
+Malhas: Nave e asteroides (modelos complexos ou esferas).
+
+Curva de Bézier: Trajetória dos asteroides.
+
+Colisões: Esfera-esfera (tiro vs. asteroide), cubo-plano (nave vs. limite da tela).
+
+12. Jardim Interativo com Abelhas
+Descrição: Um jardim 3D onde abelhas coletam pólen de flores (controladas pelo usuário).
+
+Requisitos:
+
+Malhas: Abelhas, flores, árvores (modelos estilizados).
+
+Curva de Bézier: Voos das abelhas entre flores.
+
+Colisões: Ponto-esfera (abelha vs. flor).
+
+13. Jogo de Plataforma 3D Minimalista
+Descrição: Um personagem deve pular entre plataformas para alcançar um objetivo.
+
+Requisitos:
+
+Malhas: Personagem e plataformas (cubos ou modelos simples).
+
+Colisões: Cubo-cubo (personagem vs. plataformas).
+
+Câmeras: Câmera em terceira pessoa (seguindo o personagem).
+
+14. Estacionamento 3D com Carro Robô
+Descrição: Um carro autônomo deve estacionar em uma vaga, evitando obstáculos.
+
+Requisitos:
+
+Malhas: Carro, vagas, obstáculos.
+
+Curva de Bézier: Trajetória do carro ao estacionar.
+
+Colisões: Cubo-cubo (carro vs. obstáculos).
+
+15. Pescaria em 3D
+Descrição: O jogador controla uma vara de pesca para pegar peixes em um lago.
+
+Requisitos:
+
+Malhas: Vara de pesca, peixes, água (com transparência).
+
+Colisões: Ponto-esfera (anzol vs. peixe).
+
+Iluminação: Reflexos na água (Blinn-Phong).
