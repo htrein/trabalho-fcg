@@ -1,0 +1,38 @@
+# Checklist do Projeto
+
+## Modelos e Geometria
+- [ ] Incluir pelo menos 1 modelo geométrico complexo (≥ cow.obj)
+- [ ] Criar múltiplas instâncias (usar Model Matrix) para pelo menos 1 objeto
+
+## Interação
+- [ ] Implementar controles de usuário para transformações geométricas (translação, rotação, escala)
+
+## Câmeras
+- [ ] Implementar no mínimo 2 tipos de câmeras diferentes
+
+## Iluminação e Shading
+- [ ] Aplicar iluminação difusa em todos os objetos
+- [ ] Implementar modelo Blinn-Phong
+- [ ] Ter pelo menos 1 objeto com shading Gouraud
+- [ ] Ter pelo menos 1 objeto com shading Phong
+
+## Texturas
+- [ ] Todos os objetos devem usar texturas para cores (não cores sólidas)
+- [ ] Utilizar no mínimo 3 imagens de textura distintas
+
+## Colisões
+- [ ] Implementar 3 tipos de testes de intersecção (em collisions.cpp)
+
+## Animações
+- [ ] Criar animação de movimento usando curva de Bézier cúbica
+- [ ] Implementar animação baseada em tempo (não em frames)
+
+## Documentação
+- [ ] README.md com:
+  - [ ] Divisão de contribuições entre os membros
+  - [ ] Relato de uso de ferramentas de IA (ChatGPT, Copilot, etc.)
+  - [ ] Descrição dos conceitos de CG implementados
+  - [ ] Pelo menos 2 imagens da aplicação
+  - [ ] Manual de uso (atalhos de teclado/mouse)
+  - [ ] Instruções de compilação e execução
+- [ ] Vídeo de 3-5 minutos demonstrando a aplicação
