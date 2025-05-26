@@ -17,6 +17,8 @@ uniform mat4 projection;
 // Shader. Veja o arquivo "shader_fragment.glsl".
 out vec4 position_world;
 out vec4 normal;
+//NOVO
+out vec2 textcoords;
 
 void main()
 {
@@ -55,5 +57,8 @@ void main()
     // Veja slides 123-151 do documento Aula_07_Transformacoes_Geometricas_3D.pdf.
     normal = inverse(transpose(model)) * normal_coefficients;
     normal.w = 0.0;
+
+    //NOVO
+    textcoords = texture_coefficients;
 }
 

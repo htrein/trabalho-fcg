@@ -41,10 +41,15 @@
 
 // Headers da biblioteca para carregar modelos obj
 #include <tiny_obj_loader.h>
+//NOVO
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
 #include "matrices.h"
+//NOVO
+#include "collisions.cpp"
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
@@ -149,6 +154,9 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
+//NOVO
+GLuint LoadTextureFromFile(const char* filename);
+
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
 struct SceneObject
@@ -213,6 +221,11 @@ GLint g_model_uniform;
 GLint g_view_uniform;
 GLint g_projection_uniform;
 GLint g_object_id_uniform;
+
+
+//NOVO
+glm::vec3 g_BunnyPosition = glm::vec3(0.0f, 0.0f, 0.0f);
+float g_BunnySpeed = 2.0f;
 
 int main(int argc, char* argv[])
 {
@@ -300,6 +313,12 @@ int main(int argc, char* argv[])
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
 
+    //NOVO
+    ObjModel charactermodel("../../data/leather_chair(OBJ).obj");
+    ComputeNormals(&charactermodel);
+    BuildTrianglesAndAddToVirtualScene(&charactermodel);
+    GLuint leather_chair_texture = LoadTextureFromFile("../../data/Textures/leather_chair_BaseColor.png");
+
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
@@ -316,6 +335,8 @@ int main(int argc, char* argv[])
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
+
+    float last_time = (float)glfwGetTime();
 
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -349,11 +370,49 @@ int main(int argc, char* argv[])
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
-        glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+        glm::vec4 camera_position_c  = glm::vec4(x, y, z, 1.0f) + glm::vec4(g_BunnyPosition, 0.0f); // Ponto "c", centro da câmera
+        glm::vec4 camera_lookat_l    = glm::vec4(g_BunnyPosition, 1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
         glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
+
+        //NOVO (usando ideias do lab2)
+        float current_time = (float)glfwGetTime();
+        float delta_time = current_time - last_time;
+        last_time = current_time;
+        glm::vec3 front_vector = glm::normalize(glm::vec3(camera_view_vector.x, 0.0f, camera_view_vector.z));
+        glm::vec3 right_vector = glm::normalize(glm::cross(front_vector, glm::vec3(0.0f, 1.0f, 0.0f)));
+        float camera_speed = g_BunnySpeed * delta_time;
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            g_BunnyPosition += front_vector * camera_speed;
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            g_BunnyPosition -= front_vector * camera_speed;
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            g_BunnyPosition -= right_vector * camera_speed;
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            g_BunnyPosition += right_vector * camera_speed;
+        //NOVO lógica de pulo
+        static bool jumping = false;
+        static float jump_velocity = 0.0f;
+        const float gravity = 9.8f;
+        const float jump_strength = 7.0f; //varíavel importante pra adaptar a dificuldade do jogo
+                                                                            //sem double jump
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !jumping && g_BunnyPosition.y <= 0.0f)
+        {
+            jumping = true;
+            jump_velocity = jump_strength;
+        }
+        if (jumping)
+        {
+            g_BunnyPosition.y += jump_velocity * delta_time; 
+            jump_velocity -= gravity * delta_time; //adiciona gravidade
+            if (g_BunnyPosition.y <= 0.0f) //voltar ao chão
+            {
+                g_BunnyPosition.y = 0.0f;
+                jumping = false;
+                jump_velocity = 0.0f;
+            }
+        }
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
         glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
@@ -398,6 +457,7 @@ int main(int argc, char* argv[])
         #define SPHERE 0
         #define BUNNY  1
         #define PLANE  2
+        #define CHARACTER 3
 
         // Desenhamos o modelo da esfera
         model = Matrix_Translate(-1.0f,0.0f,0.0f);
@@ -406,7 +466,7 @@ int main(int argc, char* argv[])
         DrawVirtualObject("the_sphere");
 
         // Desenhamos o modelo do coelho
-        model = Matrix_Translate(1.0f,0.0f,0.0f)
+        model = Matrix_Translate(g_BunnyPosition.x, g_BunnyPosition.y, g_BunnyPosition.z)
               * Matrix_Rotate_Z(g_AngleZ)
               * Matrix_Rotate_Y(g_AngleY)
               * Matrix_Rotate_X(g_AngleX);
@@ -420,6 +480,11 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("the_plane");
 
+        // NOVO
+        model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CHARACTER);
+        DrawVirtualObject("leather_chair");
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -1058,79 +1123,11 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 // tecla do teclado. Veja http://www.glfw.org/docs/latest/input_guide.html#input_key
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 {
-    // ======================
-    // Não modifique este loop! Ele é utilizando para correção automatizada dos
-    // laboratórios. Deve ser sempre o primeiro comando desta função KeyCallback().
-    for (int i = 0; i < 10; ++i)
-        if (key == GLFW_KEY_0 + i && action == GLFW_PRESS && mod == GLFW_MOD_SHIFT)
-            std::exit(100 + i);
-    // ======================
 
     // Se o usuário pressionar a tecla ESC, fechamos a janela.
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
 
-    // O código abaixo implementa a seguinte lógica:
-    //   Se apertar tecla X       então g_AngleX += delta;
-    //   Se apertar tecla shift+X então g_AngleX -= delta;
-    //   Se apertar tecla Y       então g_AngleY += delta;
-    //   Se apertar tecla shift+Y então g_AngleY -= delta;
-    //   Se apertar tecla Z       então g_AngleZ += delta;
-    //   Se apertar tecla shift+Z então g_AngleZ -= delta;
-
-    float delta = 3.141592 / 16; // 22.5 graus, em radianos.
-
-    if (key == GLFW_KEY_X && action == GLFW_PRESS)
-    {
-        g_AngleX += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-
-    if (key == GLFW_KEY_Y && action == GLFW_PRESS)
-    {
-        g_AngleY += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-    if (key == GLFW_KEY_Z && action == GLFW_PRESS)
-    {
-        g_AngleZ += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
-    }
-
-    // Se o usuário apertar a tecla espaço, resetamos os ângulos de Euler para zero.
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-    {
-        g_AngleX = 0.0f;
-        g_AngleY = 0.0f;
-        g_AngleZ = 0.0f;
-        g_ForearmAngleX = 0.0f;
-        g_ForearmAngleZ = 0.0f;
-        g_TorsoPositionX = 0.0f;
-        g_TorsoPositionY = 0.0f;
-    }
-
-    // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
-    if (key == GLFW_KEY_P && action == GLFW_PRESS)
-    {
-        g_UsePerspectiveProjection = true;
-    }
-
-    // Se o usuário apertar a tecla O, utilizamos projeção ortográfica.
-    if (key == GLFW_KEY_O && action == GLFW_PRESS)
-    {
-        g_UsePerspectiveProjection = false;
-    }
-
-    // Se o usuário apertar a tecla H, fazemos um "toggle" do texto informativo mostrado na tela.
-    if (key == GLFW_KEY_H && action == GLFW_PRESS)
-    {
-        g_ShowInfoText = !g_ShowInfoText;
-    }
-
-    // Se o usuário apertar a tecla R, recarregamos os shaders dos arquivos "shader_fragment.glsl" e "shader_vertex.glsl".
-    if (key == GLFW_KEY_R && action == GLFW_PRESS)
-    {
-        LoadShadersFromFiles();
-        fprintf(stdout,"Shaders recarregados!\n");
-        fflush(stdout);
-    }
 }
 
 // Definimos o callback para impressão de erros da GLFW no terminal
@@ -1436,6 +1433,24 @@ void PrintObjModelInfo(ObjModel* model)
   }
 }
 
-// set makeprg=cd\ ..\ &&\ make\ run\ >/dev/null
-// vim: set spell spelllang=pt_br :
-
+GLuint LoadTextureFromFile(const char* filename)
+{
+    int width, height, channels;
+    unsigned char* data = stbi_load(filename, &width, &height, &channels, 0);
+    if (!data) {
+        fprintf(stderr, "Erro ao carregar textura: %s\n", filename);
+        return 0;
+    }
+    GLuint tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    stbi_image_free(data);
+    return tex;
+}
