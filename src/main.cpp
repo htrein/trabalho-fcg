@@ -306,9 +306,10 @@ int main(int argc, char* argv[])
     ComputeNormals(&spheremodel);
     BuildTrianglesAndAddToVirtualScene(&spheremodel);
 
-    ObjModel bunnymodel("../../data/bunny.obj");
+    ObjModel bunnymodel("../../data/hare.obj");
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
+    GLuint hare_texture = LoadTextureFromFile("../../data/Textures/hare_diffuse.png");
 
     ObjModel planemodel("../../data/plane.obj");
     ComputeNormals(&planemodel);
