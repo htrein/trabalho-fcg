@@ -22,7 +22,7 @@ uniform sampler2D texture1;
 #define BUNNY  1
 #define PLANE  2
 //NOVO
-#define CHARACTER 3
+#define CHAIR 3
 uniform int object_id;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
@@ -88,7 +88,7 @@ void main()
         Ka = vec3(0.0,0.0,0.0);
         q = 20.0;
     } 
-    else if (object_id == CHARACTER){
+    else if (object_id == CHAIR){
         color.rgb = texture(texture1, texcoords).rgb;
         Kd = vec3(0.4, 0.2, 0.1);
         Ks = vec3(0.3, 0.3, 0.3);

@@ -109,6 +109,14 @@ struct ObjModel
     }
 };
 
+//NOVO
+struct Collider{ //estrutura para um objeto colidível
+    glm::vec3 pos;
+    glm::vec3 bbox_min;
+    glm::vec3 bbox_max;
+};
+std::vector<Collider> colliders; //vetor de objetos colidíveis
+std::pair<glm::vec3, glm::vec3> createBoundingBox(const tinyobj::attrib_t& atrib); //funcao para criar bounding boxes apartir de .obj
 
 // Declaração de funções utilizadas para pilha de matrizes de modelagem.
 void PushMatrix(glm::mat4 M);
@@ -222,10 +230,9 @@ GLint g_view_uniform;
 GLint g_projection_uniform;
 GLint g_object_id_uniform;
 
-
 //NOVO
 bool firstpCamera = false;
-glm::vec3 g_BunnyPosition = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 g_BunnyPosition = glm::vec3(3.0f, 0.0f, 0.0f);
 float g_BunnySpeed = 2.0f;
 
 int main(int argc, char* argv[])
@@ -309,17 +316,23 @@ int main(int argc, char* argv[])
     ObjModel bunnymodel("../../data/bunny.obj");
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
-
+    //NOVO
+    std::pair<glm::vec3, glm::vec3> bunny_limits = createBoundingBox(bunnymodel.attrib);
+    glm::vec3 bunny_bbox_min = bunny_limits.first;
+    glm::vec3 bunny_bbox_max = bunny_limits.second;
+    
     ObjModel planemodel("../../data/plane.obj");
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
 
     //NOVO
-    ObjModel charactermodel("../../data/leather_chair(OBJ).obj");
-    ComputeNormals(&charactermodel);
-    BuildTrianglesAndAddToVirtualScene(&charactermodel);
+    ObjModel chair("../../data/leather_chair(OBJ).obj");
+    ComputeNormals(&chair);
+    BuildTrianglesAndAddToVirtualScene(&chair);
     GLuint leather_chair_texture = LoadTextureFromFile("../../data/Textures/leather_chair_BaseColor.png");
-
+    std::pair<glm::vec3, glm::vec3> chair_limits = createBoundingBox(chair.attrib);
+    colliders.push_back({glm::vec3(0.0f, -1.0f, 0.0f), chair_limits.first, chair_limits.second});
+    
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
@@ -389,9 +402,13 @@ int main(int argc, char* argv[])
         float current_time = (float)glfwGetTime();
         float delta_time = current_time - last_time;
         last_time = current_time;
+
         glm::vec3 front_vector = glm::normalize(glm::vec3(camera_view_vector.x, 0.0f, camera_view_vector.z));
         glm::vec3 right_vector = glm::normalize(glm::cross(front_vector, glm::vec3(0.0f, 1.0f, 0.0f)));
         float camera_speed = g_BunnySpeed * delta_time;
+
+        static glm::vec3 previous_bunny_position = g_BunnyPosition;
+
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
             g_BunnyPosition += front_vector * camera_speed;
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -400,17 +417,13 @@ int main(int argc, char* argv[])
             g_BunnyPosition -= right_vector * camera_speed;
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
             g_BunnyPosition += right_vector * camera_speed;
+
         //NOVO lógica de pulo
         static bool jumping = false;
         static float jump_velocity = 0.0f;
         const float gravity = 9.8f;
         const float jump_strength = 7.0f; //varíavel importante pra adaptar a dificuldade do jogo
-                                                                            //sem double jump
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !jumping && g_BunnyPosition.y <= 0.0f)
-        {
-            jumping = true;
-            jump_velocity = jump_strength;
-        }
+
         if (jumping)
         {
             g_BunnyPosition.y += jump_velocity * delta_time; 
@@ -422,6 +435,71 @@ int main(int argc, char* argv[])
                 jump_velocity = 0.0f;
             }
         }
+        //NOVO bounding box do personagem principal
+        glm::vec3 bunny_min = g_BunnyPosition + bunny_bbox_min;
+        glm::vec3 bunny_max = g_BunnyPosition + bunny_bbox_max;
+        bool on_top = false; //verifica se o personagem está em cima de um obj
+        const float folga = 0.01f; //folga para evitar jittering
+        //para cada objeto colidivel testa se há colisao
+        for (const auto& col : colliders) {
+            glm::vec3 obj_min = col.pos + col.bbox_min;
+            glm::vec3 obj_max = col.pos + col.bbox_max;
+
+            if (AABBCollision(bunny_min, bunny_max, obj_min, obj_max)) {
+
+                if (previous_bunny_position.y >= obj_max.y - folga && bunny_min.y < obj_max.y + folga) {
+                    //y
+                    g_BunnyPosition.y = obj_max.y - bunny_bbox_min.y;
+                    bunny_min = g_BunnyPosition + bunny_bbox_min;
+                    bunny_max = g_BunnyPosition + bunny_bbox_max;
+                    if (jump_velocity <= 0.0f) {
+                        jumping = false;
+                        jump_velocity = 0.0f;
+                        on_top = true;
+                    }
+                } else {
+                    //x
+                    glm::vec3 try_pos = g_BunnyPosition;
+                    try_pos.x = previous_bunny_position.x;
+                    glm::vec3 try_min = try_pos + bunny_bbox_min;
+                    glm::vec3 try_max = try_pos + bunny_bbox_max;
+                    if (!AABBCollision(try_min, try_max, obj_min, obj_max)) {
+                        g_BunnyPosition.x = previous_bunny_position.x;
+                        bunny_min = g_BunnyPosition + bunny_bbox_min;
+                        bunny_max = g_BunnyPosition + bunny_bbox_max;
+                        continue;
+                    }
+                    //z
+                    try_pos = g_BunnyPosition;
+                    try_pos.z = previous_bunny_position.z;
+                    try_min = try_pos + bunny_bbox_min;
+                    try_max = try_pos + bunny_bbox_max;
+                    if (!AABBCollision(try_min, try_max, obj_min, obj_max)) {
+                        g_BunnyPosition.z = previous_bunny_position.z;
+                        bunny_min = g_BunnyPosition + bunny_bbox_min;
+                        bunny_max = g_BunnyPosition + bunny_bbox_max;
+                        continue;
+                    }
+                    g_BunnyPosition = previous_bunny_position;
+                    bunny_min = g_BunnyPosition + bunny_bbox_min;
+                    bunny_max = g_BunnyPosition + bunny_bbox_max;
+                }
+            }
+        }
+        //queda
+        if (!on_top && g_BunnyPosition.y > 0.0f && !jumping) {
+            jumping = true;
+            jump_velocity = 0.0f;
+        }
+        //permite pulo se está no chao ou se esta em cima de outro objeto
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !jumping && (g_BunnyPosition.y <= 0.0f || on_top))
+        {
+            jumping = true;
+            jump_velocity = jump_strength;
+        }
+        //atualiza posicao
+        previous_bunny_position = g_BunnyPosition;
+
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
         glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
@@ -466,7 +544,7 @@ int main(int argc, char* argv[])
         #define SPHERE 0
         #define BUNNY  1
         #define PLANE  2
-        #define CHARACTER 3
+        #define CHAIR  3 //NOVO
 
         // Desenhamos o modelo da esfera
         model = Matrix_Translate(-1.0f,0.0f,0.0f);
@@ -489,10 +567,10 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("the_plane");
 
-        // NOVO
+        //NOVO
         model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, CHARACTER);
+        glUniform1i(g_object_id_uniform, CHAIR);
         DrawVirtualObject("leather_chair");
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
@@ -1466,3 +1544,28 @@ GLuint LoadTextureFromFile(const char* filename)
     stbi_image_free(data);
     return tex;
 }
+
+std::pair<glm::vec3, glm::vec3> createBoundingBox(const tinyobj::attrib_t& atrib){
+    float min_x = std::numeric_limits<float>::max();
+    float min_y = std::numeric_limits<float>::max();
+    float min_z = std::numeric_limits<float>::max();
+    float max_x = std::numeric_limits<float>::lowest();
+    float max_y = std::numeric_limits<float>::lowest();
+    float max_z = std::numeric_limits<float>::lowest();
+    for (size_t i = 0; i < atrib.vertices.size(); i += 3)
+    {
+        float vx = atrib.vertices[i + 0];
+        float vy = atrib.vertices[i + 1];
+        float vz = atrib.vertices[i + 2];
+
+        if (vx < min_x) min_x = vx;
+        if (vy < min_y) min_y = vy;
+        if (vz < min_z) min_z = vz;
+        if (vx > max_x) max_x = vx;
+        if (vy > max_y) max_y = vy;
+        if (vz > max_z) max_z = vz;
+    }
+    glm::vec3 bbox_min = glm::vec3(min_x, min_y, min_z);
+    glm::vec3 bbox_max = glm::vec3(max_x, max_y, max_z);
+    return {bbox_min, bbox_max};
+}   
