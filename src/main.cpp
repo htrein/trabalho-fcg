@@ -1569,3 +1569,4 @@ std::pair<glm::vec3, glm::vec3> createBoundingBox(const tinyobj::attrib_t& atrib
     glm::vec3 bbox_max = glm::vec3(max_x, max_y, max_z);
     return {bbox_min, bbox_max};
 }   
+
