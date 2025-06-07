@@ -118,7 +118,7 @@ void PopMatrix(glm::mat4& M);
 // logo após a definição de main() neste arquivo.
 void BuildTrianglesAndAddToVirtualScene(ObjModel*); // Constrói representação de um ObjModel como malha de triângulos para renderização
 void ComputeNormals(ObjModel* model); // Computa normais de um ObjModel, caso não existam.
-void LoadShadersFromFiles(); // Carrega os shaders de vértice e fragmento, criando um programa de GPU
+void LoadShadersFromFiles(GLuint *IdFragmentShader); // Carrega os shaders de vértice e fragmento, criando um programa de GPU
 void DrawVirtualObject(const char* object_name); // Desenha um objeto armazenado em g_VirtualScene
 GLuint LoadShader_Vertex(const char* filename);   // Carrega um vertex shader
 GLuint LoadShader_Fragment(const char* filename); // Carrega um fragment shader
@@ -299,17 +299,21 @@ int main(int argc, char* argv[])
     // Carregamos os shaders de vértices e de fragmentos que serão utilizados
     // para renderização. Veja slides 180-200 do documento Aula_03_Rendering_Pipeline_Grafico.pdf.
     //
-    LoadShadersFromFiles();
+    GLuint IdFragmentShader;
+    LoadShadersFromFiles(&IdFragmentShader);
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel spheremodel("../../data/sphere.obj");
     ComputeNormals(&spheremodel);
     BuildTrianglesAndAddToVirtualScene(&spheremodel);
 
-    ObjModel bunnymodel("../../data/hare.obj");
+    ObjModel bunnymodel("../../data/hare1.obj");
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
-    GLuint hare_texture = LoadTextureFromFile("../../data/Textures/hare_diffuse.png");
+    // GLuint hare_texture = LoadTextureFromFile("../../data/Textures/hare_diffuse.png");
+    // glActiveTexture(GL_TEXTURE0);
+    // glBindTexture(GL_TEXTURE_2D, hare_texture);
+    //glUniform1i(glGetUniformLocation(IdFragmentShader, "texture_hare"), 0);
 
     ObjModel planemodel("../../data/plane.obj");
     ComputeNormals(&planemodel);
@@ -320,6 +324,8 @@ int main(int argc, char* argv[])
     ComputeNormals(&charactermodel);
     BuildTrianglesAndAddToVirtualScene(&charactermodel);
     GLuint leather_chair_texture = LoadTextureFromFile("../../data/Textures/leather_chair_BaseColor.png");
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, leather_chair_texture);
 
     if ( argc > 1 )
     {
@@ -482,7 +488,7 @@ int main(int argc, char* argv[])
               * Matrix_Rotate_X(g_AngleX);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
-        DrawVirtualObject("the_bunny");
+        DrawVirtualObject("hare");
 
         // Desenhamos o modelo do plano
         model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
@@ -558,7 +564,7 @@ void DrawVirtualObject(const char* object_name)
 // Função que carrega os shaders de vértices e de fragmentos que serão
 // utilizados para renderização. Veja slides 180-200 do documento Aula_03_Rendering_Pipeline_Grafico.pdf.
 //
-void LoadShadersFromFiles()
+void LoadShadersFromFiles(GLuint *IdFragmentShader)
 {
     // Note que o caminho para os arquivos "shader_vertex.glsl" e
     // "shader_fragment.glsl" estão fixados, sendo que assumimos a existência
@@ -579,14 +585,14 @@ void LoadShadersFromFiles()
     //       o-- shader_fragment.glsl
     //
     GLuint vertex_shader_id = LoadShader_Vertex("../../src/shader_vertex.glsl");
-    GLuint fragment_shader_id = LoadShader_Fragment("../../src/shader_fragment.glsl");
+    *IdFragmentShader = LoadShader_Fragment("../../src/shader_fragment.glsl");
 
     // Deletamos o programa de GPU anterior, caso ele exista.
     if ( g_GpuProgramID != 0 )
         glDeleteProgram(g_GpuProgramID);
 
     // Criamos um programa de GPU utilizando os shaders carregados acima.
-    g_GpuProgramID = CreateGpuProgram(vertex_shader_id, fragment_shader_id);
+    g_GpuProgramID = CreateGpuProgram(vertex_shader_id, *IdFragmentShader);
 
     // Buscamos o endereço das variáveis definidas dentro do Vertex Shader.
     // Utilizaremos estas variáveis para enviar dados para a placa de vídeo

@@ -15,6 +15,7 @@ uniform mat4 view;
 uniform mat4 projection;
 //NOVO
 uniform sampler2D texture1;
+uniform sampler2D texture_hare;
 
 
 // Identificador que define qual objeto está sendo desenhado no momento
@@ -74,10 +75,11 @@ void main()
     {
         // PREENCHA AQUI
         // Propriedades espectrais do coelho
-        Kd = vec3(0.08,0.4,0.8);
+        Kd = vec3(0.18,0.4,0.8);
         Ks = vec3(0.8,0.8,0.8);
         Ka = Kd * 0.5;
         q = 32.0;
+    
     }
     else if ( object_id == PLANE )
     {
