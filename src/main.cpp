@@ -5,9 +5,6 @@
 //    INF01047 Fundamentos de Computação Gráfica
 //               Prof. Eduardo Gastal
 //
-//                   LABORATÓRIO 4
-//
-
 // Arquivos "headers" padrões de C podem ser incluídos em um
 // programa C++, sendo necessário somente adicionar o caractere
 // "c" antes de seu nome, e remover o sufixo ".h". Exemplo:
@@ -41,16 +38,15 @@
 
 // Headers da biblioteca para carregar modelos obj
 #include <tiny_obj_loader.h>
-//NOVO
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
 #include "matrices.h"
-//NOVO
 #include "collisions.cpp"
 
+// NOVO
 #define SPHERE 0
 #define BUNNY  1
 #define PLANE  2
@@ -115,7 +111,6 @@ struct ObjModel
     }
 };
 
-//NOVO
 struct Collider{ //estrutura para um objeto colidível
     glm::vec3 pos;
     glm::vec3 bbox_min;
@@ -168,7 +163,7 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
-//NOVO
+// NOVO
 GLuint LoadTextureFromFile(const char* filename);
 void LoadTextureImage(const char* filename);
 
@@ -236,11 +231,10 @@ GLint g_model_uniform;
 GLint g_view_uniform;
 GLint g_projection_uniform;
 GLint g_object_id_uniform;
+//NOVO
 GLuint g_NumLoadedTextures = 0;
 GLint g_camera_position_uniform;
 
-
-//NOVO
 bool firstpCamera = false;
 glm::vec3 g_BunnyPosition = glm::vec3(3.0f, 0.0f, 0.0f);
 float g_BunnySpeed = 2.0f;
@@ -318,6 +312,7 @@ int main(int argc, char* argv[])
 
     LoadShadersFromFiles();
 
+    //NOVO
     LoadTextureImage("../../data/Textures/hare_diffuse.png"); // TextureImage0
     LoadTextureImage("../../data/Textures/leather_chair_BaseColor.png"); // TextureImage1
     LoadTextureImage("../../data/Textures/fundo.jpg"); // TextureImage2
@@ -331,7 +326,7 @@ int main(int argc, char* argv[])
     ObjModel bunnymodel("../../data/hare1.obj");
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
-    //NOVO
+
     std::pair<glm::vec3, glm::vec3> bunny_limits = createBoundingBox(bunnymodel.attrib);
     glm::vec3 bunny_bbox_min = bunny_limits.first;
     glm::vec3 bunny_bbox_max = bunny_limits.second;
@@ -340,7 +335,6 @@ int main(int argc, char* argv[])
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
 
-    //NOVO
     ObjModel chair("../../data/leather_chair(OBJ).obj");
     ComputeNormals(&chair);
     BuildTrianglesAndAddToVirtualScene(&chair);
@@ -399,7 +393,6 @@ int main(int argc, char* argv[])
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
 
-        //NOVO
         glm::vec4 camera_position_c, camera_lookat_l, camera_view_vector, camera_up_vector;
         camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
         if(firstpCamera){
@@ -411,10 +404,9 @@ int main(int argc, char* argv[])
             camera_lookat_l = glm::vec4(g_BunnyPosition, 1.0f);
             camera_view_vector = camera_lookat_l - camera_position_c;
         }
-
+        //NOVO
         glUniform4f(g_camera_position_uniform, camera_position_c.x, camera_position_c.y, camera_position_c.z, camera_position_c.w);
 
-        //NOVO (usando ideias do lab2)
         float current_time = (float)glfwGetTime();
         float delta_time = current_time - last_time;
         last_time = current_time;
@@ -434,7 +426,6 @@ int main(int argc, char* argv[])
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
             g_BunnyPosition += right_vector * camera_speed;
 
-        //NOVO lógica de pulo
         static bool jumping = false;
         static float jump_velocity = 0.0f;
         const float gravity = 9.8f;
@@ -451,7 +442,6 @@ int main(int argc, char* argv[])
                 jump_velocity = 0.0f;
             }
         }
-        //NOVO bounding box do personagem principal
         glm::vec3 bunny_min = g_BunnyPosition + bunny_bbox_min;
         glm::vec3 bunny_max = g_BunnyPosition + bunny_bbox_max;
         bool on_top = false; //verifica se o personagem está em cima de um obj
@@ -556,32 +546,22 @@ int main(int argc, char* argv[])
         // efetivamente aplicadas em todos os pontos.
         glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
-
-        // // inicio ceu
-        // // Render Sky Sphere first
-        glDepthMask(GL_FALSE); // Disable depth writing for sky sphere
-        glCullFace(GL_FRONT);
-
-        glm::mat4 sky_view_matrix = glm::mat4(glm::mat3(view)); // Remove translation from view matrix
-        // Center the sky sphere at the camera's position and scale it large.
-        // The exact scale might need adjustment, or use shader tricks to ensure it's always at far plane.
-        glm::mat4 sky_model_matrix = Matrix_Translate(camera_position_c.x, camera_position_c.y, camera_position_c.z)
-                                   * Matrix_Scale(1.0f, 1.0f, 1.0f); // Adjust scale as needed
-
-        //glUniformMatrix4fv(g_view_uniform, 1, GL_FALSE, glm::value_ptr(sky_view_matrix));
-        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(sky_model_matrix));
-        // Projection matrix is already set and is the same
-        glUniform1i(g_object_id_uniform, SKY_SPHERE);
         
-        // Draw the sphere model as the sky. Assumes "the_sphere" is the name of your sphere object.
-        // And that TextureImage2 (unit 2) is fundo.jpg, handled by fragment shader.
+        //NOVO
+        // Esfera ceu
+        glDepthMask(GL_FALSE); // Desabilita escrita de profundidade
+        glCullFace(GL_FRONT);   // Oculta a frente dos vértices
+
+        // Usa o modelo de esfera pronto pra calcular o céu, acho que vamos mudar
+        // Movimenta ele junto com a camera
+        glm::mat4 model = Matrix_Translate(camera_position_c.x, camera_position_c.y, camera_position_c.z)
+                                   * Matrix_Scale(1.0f, 1.0f, 1.0f); // Adjust scale as needed
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SKY_SPHERE);
         DrawVirtualObject("the_sphere"); 
 
         glCullFace(GL_BACK);
-        glDepthMask(GL_TRUE); // Re-enable depth writing for other objects
-        // // IMPORTANT: Reset view matrix for other objects to the original one with translation
-        // glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(view));
-        // fim ceu
+        glDepthMask(GL_TRUE); // Faz voltar os parâmetros originais
 
         // Desenhamos o modelo da esfera
         model = Matrix_Translate(-1.0f,0.0f,0.0f);
@@ -604,7 +584,6 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("the_plane");
 
-        //NOVO
         model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, CHAIR);
@@ -642,6 +621,8 @@ int main(int argc, char* argv[])
     // Fim do programa
     return 0;
 }
+
+    // NOVO
 // Função que carrega uma imagem para ser utilizada como textura
 void LoadTextureImage(const char* filename)
 {
@@ -762,6 +743,7 @@ void LoadShadersFromFiles()
     g_object_id_uniform  = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
     g_camera_position_uniform = glGetUniformLocation(g_GpuProgramID, "position_camera"); // Variável "position_camera" em shader_fragment.glsl
 
+    // NOVO
     glUseProgram(g_GpuProgramID);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage0"), 0);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage1"), 1);
@@ -1307,6 +1289,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if (key == GLFW_KEY_C && action == GLFW_PRESS)
         firstpCamera = !firstpCamera;
 
+    // NOVO
     // Se o usuário apertar a tecla R, recarregamos os shaders dos arquivos "shader_fragment.glsl" e "shader_vertex.glsl".
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
     {

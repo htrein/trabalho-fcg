@@ -10,6 +10,7 @@ layout (location = 2) in vec2 texture_coefficients;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+// NOVO
 uniform int object_id;
 uniform vec4 camera_position;
 
@@ -19,8 +20,8 @@ uniform vec4 camera_position;
 // Shader. Veja o arquivo "shader_fragment.glsl".
 out vec4 position_world;
 out vec4 normal;
-//NOVO
 out vec2 texcoords;
+// NOVO
 out vec4 camera_pos;
 out vec4 position_model;
 
@@ -56,15 +57,8 @@ void main()
 
     // Posição do vértice atual no sistema de coordenadas global (World).
     position_world = model * model_coefficients;
+    // NOVO
     position_model = model_coefficients;
-
-
-    // if (object_id == SKY_SPHERE) {
-    //     // gl_Position = projection * view * model * model_coefficients; // view is sky_view_matrix here
-    //     // gl_Position.z = gl_Position.w; // Pushes to far plane
-    // }
-
-
     // Normal do vértice atual no sistema de coordenadas global (World).
     // Veja slides 123-151 do documento Aula_07_Transformacoes_Geometricas_3D.pdf.
     normal = inverse(transpose(model)) * normal_coefficients;

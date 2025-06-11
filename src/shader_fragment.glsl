@@ -6,15 +6,16 @@
 // "shader_vertex.glsl" e "main.cpp".
 in vec4 position_world;
 in vec4 normal;
-in vec4 camera_pos;
-//NOVO
 in vec2 texcoords;
+//NOVO
+in vec4 camera_pos;
 in vec4 position_model;
 
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+
 //NOVO
 uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
@@ -27,13 +28,14 @@ uniform sampler2D TextureImage2;
 #define BUNNY  1
 #define PLANE  2
 #define CHAIR 3
+// NOVO
 #define SKY_SPHERE 4
 uniform int object_id;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
 
-
+// NOVO
 // Constantes
 #define M_PI   3.14159265358979323846
 #define M_PI_2 1.57079632679489661923
@@ -100,12 +102,10 @@ void main()
         q = 20.0;
     } 
     else if (object_id == CHAIR){
-        // color.rgb = texture(TextureImage1, texcoords).rgb;
         Kd = vec3(0.4, 0.2, 0.1);
         Ks = vec3(0.3, 0.3, 0.3);
         Ka = Kd * 0.3;
         q = 16.0;
-        // The texture will be applied after the main lighting calculation below
     }                                                                                                                                                                                                                                          
     else // Objeto desconhecido = preto
     {
@@ -148,20 +148,20 @@ void main()
     // especular, e ambiente. Veja slide 129 do documento Aula_17_e_18_Modelos_de_Iluminacao.pdf.
     color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
 
+    // NOVO
     // Coordenadas de textura U e V
     float U = 0.0;
     float V = 0.0;
+    vec3 tex_obj;
+
     if (object_id == BUNNY) {
         U = texcoords.x;
         V = texcoords.y;
-        vec3 tex_hare = texture(TextureImage0, vec2(U,V)).rgb;
-        color.rgb = tex_hare;
+        tex_obj = texture(TextureImage0, vec2(U,V)).rgb;
     } else if ( object_id == CHAIR ){
-        // Coordenadas de textura do plano, obtidas do arquivo OBJ.
         U = texcoords.x;
         V = texcoords.y;
-        vec3 tex_hare = texture(TextureImage1, vec2(U,V)).rgb;
-        color.rgb = tex_hare;
+        tex_obj = texture(TextureImage1, vec2(U,V)).rgb;
     } else if (object_id == SKY_SPHERE) {
         float sphere_rho = 1;
         vec4 p_line = camera_pos + sphere_rho*normalize(position_model - camera_pos);
@@ -173,9 +173,11 @@ void main()
         U = (sphere_theta + M_PI) / (2*M_PI);
         V = (sphere_psi + M_PI_2)/ M_PI;
         
-        vec3 tex_sky = texture(TextureImage2, vec2(U,V)).rgb;
-        color.rgb = tex_sky;
+        tex_obj = texture(TextureImage2, vec2(U,V)).rgb;
     }
+
+    color.rgb = tex_obj;
+
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
     color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
