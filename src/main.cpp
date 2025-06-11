@@ -237,6 +237,8 @@ GLint g_view_uniform;
 GLint g_projection_uniform;
 GLint g_object_id_uniform;
 GLuint g_NumLoadedTextures = 0;
+GLint g_camera_position_uniform;
+
 
 //NOVO
 bool firstpCamera = false;
@@ -318,7 +320,7 @@ int main(int argc, char* argv[])
 
     LoadTextureImage("../../data/Textures/hare_diffuse.png"); // TextureImage0
     LoadTextureImage("../../data/Textures/leather_chair_BaseColor.png"); // TextureImage1
-    LoadTextureImage("../../data/Textures/fundo.jpg"); // TextureImage2 for Sky Sphere
+    LoadTextureImage("../../data/Textures/fundo.jpg"); // TextureImage2
     
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel spheremodel("../../data/sphere.obj");
@@ -342,7 +344,6 @@ int main(int argc, char* argv[])
     ObjModel chair("../../data/leather_chair(OBJ).obj");
     ComputeNormals(&chair);
     BuildTrianglesAndAddToVirtualScene(&chair);
-    GLuint leather_chair_texture = LoadTextureFromFile("../../data/Textures/leather_chair_BaseColor.png");
     std::pair<glm::vec3, glm::vec3> chair_limits = createBoundingBox(chair.attrib);
     colliders.push_back({glm::vec3(0.0f, -1.0f, 0.0f), chair_limits.first, chair_limits.second});
     
@@ -410,6 +411,8 @@ int main(int argc, char* argv[])
             camera_lookat_l = glm::vec4(g_BunnyPosition, 1.0f);
             camera_view_vector = camera_lookat_l - camera_position_c;
         }
+
+        glUniform4f(g_camera_position_uniform, camera_position_c.x, camera_position_c.y, camera_position_c.z, camera_position_c.w);
 
         //NOVO (usando ideias do lab2)
         float current_time = (float)glfwGetTime();
@@ -523,7 +526,7 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -10.0f; // Posição do "far plane"
+        float farplane  = -100.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -556,12 +559,13 @@ int main(int argc, char* argv[])
 
         // // inicio ceu
         // // Render Sky Sphere first
-        // glDepthMask(GL_FALSE); // Disable depth writing for sky sphere
+        glDepthMask(GL_FALSE); // Disable depth writing for sky sphere
+        glCullFace(GL_FRONT);
 
         glm::mat4 sky_view_matrix = glm::mat4(glm::mat3(view)); // Remove translation from view matrix
         // Center the sky sphere at the camera's position and scale it large.
         // The exact scale might need adjustment, or use shader tricks to ensure it's always at far plane.
-        glm::mat4 sky_model_matrix = Matrix_Translate(1.0f,0.0f,0.0f) //Matrix_Translate(camera_position_c.x, camera_position_c.y, camera_position_c.z)
+        glm::mat4 sky_model_matrix = Matrix_Translate(camera_position_c.x, camera_position_c.y, camera_position_c.z)
                                    * Matrix_Scale(1.0f, 1.0f, 1.0f); // Adjust scale as needed
 
         //glUniformMatrix4fv(g_view_uniform, 1, GL_FALSE, glm::value_ptr(sky_view_matrix));
@@ -573,7 +577,8 @@ int main(int argc, char* argv[])
         // And that TextureImage2 (unit 2) is fundo.jpg, handled by fragment shader.
         DrawVirtualObject("the_sphere"); 
 
-        // glDepthMask(GL_TRUE); // Re-enable depth writing for other objects
+        glCullFace(GL_BACK);
+        glDepthMask(GL_TRUE); // Re-enable depth writing for other objects
         // // IMPORTANT: Reset view matrix for other objects to the original one with translation
         // glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(view));
         // fim ceu
@@ -755,10 +760,12 @@ void LoadShadersFromFiles()
     g_view_uniform       = glGetUniformLocation(g_GpuProgramID, "view"); // Variável da matriz "view" em shader_vertex.glsl
     g_projection_uniform = glGetUniformLocation(g_GpuProgramID, "projection"); // Variável da matriz "projection" em shader_vertex.glsl
     g_object_id_uniform  = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
+    g_camera_position_uniform = glGetUniformLocation(g_GpuProgramID, "position_camera"); // Variável "position_camera" em shader_fragment.glsl
 
     glUseProgram(g_GpuProgramID);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage0"), 0);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage1"), 1);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage2"), 2);
     glUseProgram(0);
 
 }

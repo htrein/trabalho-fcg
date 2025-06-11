@@ -11,7 +11,7 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform int object_id;
-#define SKY_SPHERE 4
+uniform vec4 camera_position;
 
 // Atributos de vértice que serão gerados como saída ("out") pelo Vertex Shader.
 // ** Estes serão interpolados pelo rasterizador! ** gerando, assim, valores
@@ -21,6 +21,8 @@ out vec4 position_world;
 out vec4 normal;
 //NOVO
 out vec2 texcoords;
+out vec4 camera_pos;
+out vec4 position_model;
 
 void main()
 {
@@ -54,6 +56,8 @@ void main()
 
     // Posição do vértice atual no sistema de coordenadas global (World).
     position_world = model * model_coefficients;
+    position_model = model_coefficients;
+
 
     // if (object_id == SKY_SPHERE) {
     //     // gl_Position = projection * view * model * model_coefficients; // view is sky_view_matrix here
@@ -68,4 +72,5 @@ void main()
 
     //NOVO
     texcoords = texture_coefficients;
+    camera_pos = camera_position;
 }

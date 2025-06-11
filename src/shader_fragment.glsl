@@ -6,8 +6,10 @@
 // "shader_vertex.glsl" e "main.cpp".
 in vec4 position_world;
 in vec4 normal;
+in vec4 camera_pos;
 //NOVO
 in vec2 texcoords;
+in vec4 position_model;
 
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
@@ -30,6 +32,11 @@ uniform int object_id;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
+
+
+// Constantes
+#define M_PI   3.14159265358979323846
+#define M_PI_2 1.57079632679489661923
 
 void main()
 {
@@ -156,7 +163,17 @@ void main()
         vec3 tex_hare = texture(TextureImage1, vec2(U,V)).rgb;
         color.rgb = tex_hare;
     } else if (object_id == SKY_SPHERE) {
-        vec3 tex_sky = texture(TextureImage2, vec2(0.5,0.5)).rgb;
+        float sphere_rho = 1;
+        vec4 p_line = camera_pos + sphere_rho*normalize(position_model - camera_pos);
+        vec4 p_vector = p_line - camera_pos;
+
+        float sphere_theta = atan(p_vector[0], p_vector[2]);
+        float sphere_psi = asin(p_vector[1]/sphere_rho);
+
+        U = (sphere_theta + M_PI) / (2*M_PI);
+        V = (sphere_psi + M_PI_2)/ M_PI;
+        
+        vec3 tex_sky = texture(TextureImage2, vec2(U,V)).rgb;
         color.rgb = tex_sky;
     }
     // Cor final com correção gamma, considerando monitor sRGB.
