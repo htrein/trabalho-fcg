@@ -10,6 +10,8 @@ layout (location = 2) in vec2 texture_coefficients;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform int object_id;
+#define SKY_SPHERE 4
 
 // Atributos de vértice que serão gerados como saída ("out") pelo Vertex Shader.
 // ** Estes serão interpolados pelo rasterizador! ** gerando, assim, valores
@@ -18,7 +20,7 @@ uniform mat4 projection;
 out vec4 position_world;
 out vec4 normal;
 //NOVO
-out vec2 textcoords;
+out vec2 texcoords;
 
 void main()
 {
@@ -53,12 +55,17 @@ void main()
     // Posição do vértice atual no sistema de coordenadas global (World).
     position_world = model * model_coefficients;
 
+    // if (object_id == SKY_SPHERE) {
+    //     // gl_Position = projection * view * model * model_coefficients; // view is sky_view_matrix here
+    //     // gl_Position.z = gl_Position.w; // Pushes to far plane
+    // }
+
+
     // Normal do vértice atual no sistema de coordenadas global (World).
     // Veja slides 123-151 do documento Aula_07_Transformacoes_Geometricas_3D.pdf.
     normal = inverse(transpose(model)) * normal_coefficients;
     normal.w = 0.0;
 
     //NOVO
-    textcoords = texture_coefficients;
+    texcoords = texture_coefficients;
 }
-

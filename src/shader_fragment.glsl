@@ -14,15 +14,18 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 //NOVO
-uniform sampler2D texture1;
+uniform sampler2D TextureImage0;
+uniform sampler2D TextureImage1;
+uniform sampler2D TextureImage2;
+
 
 
 // Identificador que define qual objeto está sendo desenhado no momento
 #define SPHERE 0
 #define BUNNY  1
 #define PLANE  2
-//NOVO
 #define CHAIR 3
+#define SKY_SPHERE 4
 uniform int object_id;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
@@ -78,6 +81,7 @@ void main()
         Ks = vec3(0.8,0.8,0.8);
         Ka = Kd * 0.5;
         q = 32.0;
+    
     }
     else if ( object_id == PLANE )
     {
@@ -89,11 +93,12 @@ void main()
         q = 20.0;
     } 
     else if (object_id == CHAIR){
-        color.rgb = texture(texture1, texcoords).rgb;
+        // color.rgb = texture(TextureImage1, texcoords).rgb;
         Kd = vec3(0.4, 0.2, 0.1);
         Ks = vec3(0.3, 0.3, 0.3);
         Ka = Kd * 0.3;
         q = 16.0;
+        // The texture will be applied after the main lighting calculation below
     }                                                                                                                                                                                                                                          
     else // Objeto desconhecido = preto
     {
@@ -136,9 +141,25 @@ void main()
     // especular, e ambiente. Veja slide 129 do documento Aula_17_e_18_Modelos_de_Iluminacao.pdf.
     color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
 
+    // Coordenadas de textura U e V
+    float U = 0.0;
+    float V = 0.0;
+    if (object_id == BUNNY) {
+        U = texcoords.x;
+        V = texcoords.y;
+        vec3 tex_hare = texture(TextureImage0, vec2(U,V)).rgb;
+        color.rgb = tex_hare;
+    } else if ( object_id == CHAIR ){
+        // Coordenadas de textura do plano, obtidas do arquivo OBJ.
+        U = texcoords.x;
+        V = texcoords.y;
+        vec3 tex_hare = texture(TextureImage1, vec2(U,V)).rgb;
+        color.rgb = tex_hare;
+    } else if (object_id == SKY_SPHERE) {
+        vec3 tex_sky = texture(TextureImage2, vec2(0.5,0.5)).rgb;
+        color.rgb = tex_sky;
+    }
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
     color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
 } 
-
-

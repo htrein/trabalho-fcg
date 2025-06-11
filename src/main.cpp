@@ -51,6 +51,12 @@
 //NOVO
 #include "collisions.cpp"
 
+#define SPHERE 0
+#define BUNNY  1
+#define PLANE  2
+#define CHAIR 3
+#define SKY_SPHERE 4
+
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 struct ObjModel
@@ -164,6 +170,7 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 //NOVO
 GLuint LoadTextureFromFile(const char* filename);
+void LoadTextureImage(const char* filename);
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -229,6 +236,7 @@ GLint g_model_uniform;
 GLint g_view_uniform;
 GLint g_projection_uniform;
 GLint g_object_id_uniform;
+GLuint g_NumLoadedTextures = 0;
 
 //NOVO
 bool firstpCamera = false;
@@ -271,7 +279,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "ERROR: glfwCreateWindow() failed.\n");
         std::exit(EXIT_FAILURE);
     }
-   
+
     // Definimos a função de callback que será chamada sempre que o usuário
     // pressionar alguma tecla do teclado ...
     glfwSetKeyCallback(window, KeyCallback);
@@ -305,15 +313,20 @@ int main(int argc, char* argv[])
 
     // Carregamos os shaders de vértices e de fragmentos que serão utilizados
     // para renderização. Veja slides 180-200 do documento Aula_03_Rendering_Pipeline_Grafico.pdf.
-    //
+
     LoadShadersFromFiles();
 
+    LoadTextureImage("../../data/Textures/hare_diffuse.png"); // TextureImage0
+    LoadTextureImage("../../data/Textures/leather_chair_BaseColor.png"); // TextureImage1
+    LoadTextureImage("../../data/Textures/fundo.jpg"); // TextureImage2 for Sky Sphere
+    
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel spheremodel("../../data/sphere.obj");
     ComputeNormals(&spheremodel);
     BuildTrianglesAndAddToVirtualScene(&spheremodel);
 
-    ObjModel bunnymodel("../../data/bunny.obj");
+    
+    ObjModel bunnymodel("../../data/hare1.obj");
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
     //NOVO
@@ -384,14 +397,14 @@ int main(int argc, char* argv[])
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        
+
         //NOVO
         glm::vec4 camera_position_c, camera_lookat_l, camera_view_vector, camera_up_vector;
-        camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);        
+        camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
         if(firstpCamera){
             camera_position_c = glm::vec4(g_BunnyPosition, 1.0f);
             camera_view_vector = -(glm::vec4(x,y,z,0.0f));
-            camera_lookat_l = camera_position_c + glm::vec4(x,y,z,0.0f); 
+            camera_lookat_l = camera_position_c + glm::vec4(x,y,z,0.0f);
         } else {
             camera_position_c = glm::vec4(x, y, z, 1.0f) + glm::vec4(g_BunnyPosition, 0.0f);
             camera_lookat_l = glm::vec4(g_BunnyPosition, 1.0f);
@@ -426,7 +439,7 @@ int main(int argc, char* argv[])
 
         if (jumping)
         {
-            g_BunnyPosition.y += jump_velocity * delta_time; 
+            g_BunnyPosition.y += jump_velocity * delta_time;
             jump_velocity -= gravity * delta_time; //adiciona gravidade
             if (g_BunnyPosition.y <= 0.0f) //voltar ao chão
             {
@@ -538,13 +551,32 @@ int main(int argc, char* argv[])
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
         // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
         // efetivamente aplicadas em todos os pontos.
-        glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
+        glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-        #define SPHERE 0
-        #define BUNNY  1
-        #define PLANE  2
-        #define CHAIR  3 //NOVO
+        // // inicio ceu
+        // // Render Sky Sphere first
+        // glDepthMask(GL_FALSE); // Disable depth writing for sky sphere
+
+        glm::mat4 sky_view_matrix = glm::mat4(glm::mat3(view)); // Remove translation from view matrix
+        // Center the sky sphere at the camera's position and scale it large.
+        // The exact scale might need adjustment, or use shader tricks to ensure it's always at far plane.
+        glm::mat4 sky_model_matrix = Matrix_Translate(1.0f,0.0f,0.0f) //Matrix_Translate(camera_position_c.x, camera_position_c.y, camera_position_c.z)
+                                   * Matrix_Scale(1.0f, 1.0f, 1.0f); // Adjust scale as needed
+
+        //glUniformMatrix4fv(g_view_uniform, 1, GL_FALSE, glm::value_ptr(sky_view_matrix));
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(sky_model_matrix));
+        // Projection matrix is already set and is the same
+        glUniform1i(g_object_id_uniform, SKY_SPHERE);
+        
+        // Draw the sphere model as the sky. Assumes "the_sphere" is the name of your sphere object.
+        // And that TextureImage2 (unit 2) is fundo.jpg, handled by fragment shader.
+        DrawVirtualObject("the_sphere"); 
+
+        // glDepthMask(GL_TRUE); // Re-enable depth writing for other objects
+        // // IMPORTANT: Reset view matrix for other objects to the original one with translation
+        // glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(view));
+        // fim ceu
 
         // Desenhamos o modelo da esfera
         model = Matrix_Translate(-1.0f,0.0f,0.0f);
@@ -559,7 +591,7 @@ int main(int argc, char* argv[])
               * Matrix_Rotate_X(g_AngleX);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
-        DrawVirtualObject("the_bunny");
+        DrawVirtualObject("hare");
 
         // Desenhamos o modelo do plano
         model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
@@ -604,6 +636,57 @@ int main(int argc, char* argv[])
 
     // Fim do programa
     return 0;
+}
+// Função que carrega uma imagem para ser utilizada como textura
+void LoadTextureImage(const char* filename)
+{
+    printf("Carregando imagem \"%s\"... ", filename);
+
+    // Primeiro fazemos a leitura da imagem do disco
+    stbi_set_flip_vertically_on_load(true);
+    int width;
+    int height;
+    int channels;
+    unsigned char *data = stbi_load(filename, &width, &height, &channels, 3);
+
+    if ( data == NULL )
+    {
+        fprintf(stderr, "ERROR: Cannot open image file \"%s\".\n", filename);
+        std::exit(EXIT_FAILURE);
+    }
+
+    printf("OK (%dx%d).\n", width, height);
+
+    // Agora criamos objetos na GPU com OpenGL para armazenar a textura
+    GLuint texture_id;
+    GLuint sampler_id;
+    glGenTextures(1, &texture_id);
+    glGenSamplers(1, &sampler_id);
+
+    // Veja slides 95-96 do documento Aula_20_Mapeamento_de_Texturas.pdf
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // Parâmetros de amostragem da textura.
+    glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Agora enviamos a imagem lida do disco para a GPU
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+
+    GLuint textureunit = g_NumLoadedTextures;
+    glActiveTexture(GL_TEXTURE0 + textureunit);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindSampler(textureunit, sampler_id);
+
+    stbi_image_free(data);
+
+    g_NumLoadedTextures += 1;
 }
 
 // Função que desenha um objeto armazenado em g_VirtualScene. Veja definição
@@ -672,6 +755,12 @@ void LoadShadersFromFiles()
     g_view_uniform       = glGetUniformLocation(g_GpuProgramID, "view"); // Variável da matriz "view" em shader_vertex.glsl
     g_projection_uniform = glGetUniformLocation(g_GpuProgramID, "projection"); // Variável da matriz "projection" em shader_vertex.glsl
     g_object_id_uniform  = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
+
+    glUseProgram(g_GpuProgramID);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage0"), 0);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage1"), 1);
+    glUseProgram(0);
+
 }
 
 // Função que pega a matriz M e guarda a mesma no topo da pilha
@@ -733,14 +822,7 @@ void ComputeNormals(ObjModel* model)
             const glm::vec4  b = vertices[1];
             const glm::vec4  c = vertices[2];
 
-            // PREENCHA AQUI o cálculo da normal de um triângulo cujos vértices
-            // estão nos pontos "a", "b", e "c", definidos no sentido anti-horário.
-            const glm::vec4 ab = b - a;
-            const glm::vec4 ac = c - a;
-            const glm::vec3 ab3 = glm::vec3(ab.x, ab.y, ab.z);
-            const glm::vec3 ac3 = glm::vec3(ac.x, ac.y, ac.z);
-            glm::vec3 n3 = glm::normalize(glm::cross(ab3, ac3));
-            const glm::vec4 n = glm::vec4(n3, 0.0f);
+            const glm::vec4  n = crossproduct(b-a,c-a);
 
             for (size_t vertex = 0; vertex < 3; ++vertex)
             {
@@ -1033,7 +1115,7 @@ GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id)
         fprintf(stderr, "%s", output.c_str());
     }
 
-    // Os "Shader Objects" podem ser marcados para deleção após serem linkados 
+    // Os "Shader Objects" podem ser marcados para deleção após serem linkados
     glDeleteShader(vertex_shader_id);
     glDeleteShader(fragment_shader_id);
 
@@ -1135,21 +1217,21 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
         float dx = xpos - g_LastCursorPosX;
         float dy = ypos - g_LastCursorPosY;
-    
+
         // Atualizamos parâmetros da câmera com os deslocamentos
         g_CameraTheta -= 0.01f*dx;
         g_CameraPhi   += 0.01f*dy;
-    
+
         // Em coordenadas esféricas, o ângulo phi deve ficar entre -pi/2 e +pi/2.
         float phimax = 3.141592f/2;
         float phimin = -phimax;
-    
+
         if (g_CameraPhi > phimax)
             g_CameraPhi = phimax;
-    
+
         if (g_CameraPhi < phimin)
             g_CameraPhi = phimin;
-    
+
         // Atualizamos as variáveis globais para armazenar a posição atual do
         // cursor como sendo a última posição conhecida do cursor.
         g_LastCursorPosX = xpos;
@@ -1161,11 +1243,11 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
         float dx = xpos - g_LastCursorPosX;
         float dy = ypos - g_LastCursorPosY;
-    
+
         // Atualizamos parâmetros da antebraço com os deslocamentos
         g_ForearmAngleZ -= 0.01f*dx;
         g_ForearmAngleX += 0.01f*dy;
-    
+
         // Atualizamos as variáveis globais para armazenar a posição atual do
         // cursor como sendo a última posição conhecida do cursor.
         g_LastCursorPosX = xpos;
@@ -1177,11 +1259,11 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
         float dx = xpos - g_LastCursorPosX;
         float dy = ypos - g_LastCursorPosY;
-    
+
         // Atualizamos parâmetros da antebraço com os deslocamentos
         g_TorsoPositionX += 0.01f*dx;
         g_TorsoPositionY -= 0.01f*dy;
-    
+
         // Atualizamos as variáveis globais para armazenar a posição atual do
         // cursor como sendo a última posição conhecida do cursor.
         g_LastCursorPosX = xpos;
@@ -1217,6 +1299,14 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
     if (key == GLFW_KEY_C && action == GLFW_PRESS)
         firstpCamera = !firstpCamera;
+
+    // Se o usuário apertar a tecla R, recarregamos os shaders dos arquivos "shader_fragment.glsl" e "shader_vertex.glsl".
+    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+    {
+        LoadShadersFromFiles();
+        fprintf(stdout,"Shaders recarregados!\n");
+        fflush(stdout);
+    }
 
 }
 
@@ -1343,7 +1433,7 @@ void TextRendering_ShowFramesPerSecond(GLFWwindow* window)
     if ( ellapsed_seconds > 1.0f )
     {
         numchars = snprintf(buffer, 20, "%.2f fps", ellapsed_frames / ellapsed_seconds);
-    
+
         old_seconds = seconds;
         ellapsed_frames = 0;
     }
