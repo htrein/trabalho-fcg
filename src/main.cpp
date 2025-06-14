@@ -52,6 +52,7 @@
 #define PLANE  2
 #define CHAIR 3
 #define SKY_SPHERE 4
+#define BOX 5
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
@@ -236,7 +237,7 @@ GLuint g_NumLoadedTextures = 0;
 GLint g_camera_position_uniform;
 
 bool firstpCamera = false;
-glm::vec3 g_BunnyPosition = glm::vec3(3.0f, 0.0f, 0.0f);
+glm::vec3 g_BunnyPosition = glm::vec3(3.0f, -1.0f, 0.0f);
 float g_BunnySpeed = 2.0f;
 
 int main(int argc, char* argv[])
@@ -316,13 +317,27 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/Textures/hare_diffuse.png"); // TextureImage0
     LoadTextureImage("../../data/Textures/leather_chair_BaseColor.png"); // TextureImage1
     LoadTextureImage("../../data/Textures/fundo.jpg"); // TextureImage2
-    
+    LoadTextureImage("../../data/Textures/Wooden Crate_Crate_BaseColor.png");
+
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel spheremodel("../../data/sphere.obj");
     ComputeNormals(&spheremodel);
     BuildTrianglesAndAddToVirtualScene(&spheremodel);
 
-    
+    ObjModel boxmodel("../../data/woodenCrate.obj");
+    ComputeNormals(&boxmodel);
+    BuildTrianglesAndAddToVirtualScene(&boxmodel);
+    std::pair<glm::vec3, glm::vec3> box_limits = createBoundingBox(boxmodel.attrib);
+    float scale = 0.2f;
+    float spacing = 1.5f;
+    float step_height = 0.4f;
+    for (int i = 0; i < 3; ++i) {
+        glm::vec3 pos(i * spacing, i * step_height, 0.0f);
+        glm::vec3 bbox_min = box_limits.first * scale;
+        glm::vec3 bbox_max = box_limits.second * scale;
+        colliders.push_back({pos, bbox_min, bbox_max});
+    }
+
     ObjModel bunnymodel("../../data/hare1.obj");
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
@@ -435,9 +450,9 @@ int main(int argc, char* argv[])
         {
             g_BunnyPosition.y += jump_velocity * delta_time;
             jump_velocity -= gravity * delta_time; //adiciona gravidade
-            if (g_BunnyPosition.y <= 0.0f) //voltar ao chão
+            if (g_BunnyPosition.y <= -1.0f) //voltar ao chão
             {
-                g_BunnyPosition.y = 0.0f;
+                g_BunnyPosition.y = -1.0f;
                 jumping = false;
                 jump_velocity = 0.0f;
             }
@@ -577,6 +592,18 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
         DrawVirtualObject("hare");
+
+        glActiveTexture(GL_TEXTURE3);
+        for (int i = 0; i < 3; ++i)
+        {
+            float scale = 0.2f;
+            float spacing = 1.5f; 
+            float step_height = 0.4f; 
+            model = Matrix_Translate(i * spacing, i * step_height, 0.0f) * Matrix_Scale(scale, scale, scale);
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, BOX);
+            DrawVirtualObject("Crate_Plane.005");
+        }
 
         // Desenhamos o modelo do plano
         model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
@@ -748,6 +775,7 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage0"), 0);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage1"), 1);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage2"), 2);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage3"), 3);
     glUseProgram(0);
 
 }

@@ -1,14 +1,14 @@
 # Checklist do Projeto
 
 ## Modelos e Geometria
-- [ ] Incluir pelo menos 1 modelo geométrico complexo (≥ cow.obj)
+- [ V ] Incluir pelo menos 1 modelo geométrico complexo (≥ cow.obj)
 - [ ] Criar múltiplas instâncias (usar Model Matrix) para pelo menos 1 objeto
 
 ## Interação
 - [ ] Implementar controles de usuário para transformações geométricas (translação, rotação, escala)
 
 ## Câmeras
-- [ ] Implementar no mínimo 2 tipos de câmeras diferentes
+- [ V ] Implementar no mínimo 2 tipos de câmeras diferentes
 
 ## Iluminação e Shading
 - [ ] Aplicar iluminação difusa em todos os objetos

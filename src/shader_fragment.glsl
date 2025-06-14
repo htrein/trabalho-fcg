@@ -20,7 +20,7 @@ uniform mat4 projection;
 uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
-
+uniform sampler2D TextureImage3;
 
 
 // Identificador que define qual objeto está sendo desenhado no momento
@@ -30,6 +30,7 @@ uniform sampler2D TextureImage2;
 #define CHAIR 3
 // NOVO
 #define SKY_SPHERE 4
+#define BOX 5
 uniform int object_id;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
@@ -174,6 +175,10 @@ void main()
         V = (sphere_psi + M_PI_2)/ M_PI;
         
         tex_obj = texture(TextureImage2, vec2(U,V)).rgb;
+    } else if (object_id == BOX) {
+        U = texcoords.x;
+        V = texcoords.y;
+        tex_obj = texture(TextureImage3, vec2(U,V)).rgb;
     }
 
     color.rgb = tex_obj;
