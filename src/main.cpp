@@ -554,7 +554,7 @@ int main(int argc, char* argv[])
 
         // Usa o modelo de esfera pronto pra calcular o céu, acho que vamos mudar
         // Movimenta ele junto com a camera
-        glm::mat4 model = Matrix_Translate(camera_position_c.x, camera_position_c.y, camera_position_c.z)
+        model = Matrix_Translate(camera_position_c.x, camera_position_c.y, camera_position_c.z)
                                    * Matrix_Scale(1.0f, 1.0f, 1.0f); // Adjust scale as needed
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, SKY_SPHERE);
