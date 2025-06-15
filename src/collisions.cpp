@@ -22,7 +22,7 @@ bool SphereCollision(glm::vec3& center1, float radius1, glm::vec3& center2, floa
     return distance <= sumRadius;
 }
 
-bool SphereBoxCollision(glm::vec3& center, float radius, ColliderBox box){
+bool SphereBoxCollision(const glm::vec3& center, float radius, ColliderBox box){
     // 1. Find the point on the AABB closest to the sphere's center
     // The glm::clamp function is perfect for this. It limits a value to a given range.
     float closest_x = glm::clamp(center.x, box.bbox_min.x, box.bbox_max.x);

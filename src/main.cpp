@@ -436,9 +436,32 @@ int main(int argc, char* argv[])
         // Teste bruto da colisao do coelho e da bola de futebol
         // Criar uma funcao que simplifique
         for (auto& col : sphere_colliders) {
+            // Sphere (soccer ball) properties
+            // col.pos and col.radius are in the local space of the soccer ball model.
+            // The soccer ball is drawn with: model = Matrix_Translate(5.0f, 1.0f, 0.0f) * Matrix_Scale(2.0f, 2.0f, 2.0f);
+            glm::mat4 model_soccer_transform = Matrix_Translate(5.0f, 1.0f, 0.0f) * Matrix_Scale(2.0f, 2.0f, 2.0f);
+            glm::vec3 sphere_world_center = glm::vec3(model_soccer_transform * glm::vec4(col.pos, 1.0f));
+            float soccer_ball_scale_factor = 2.0f; // Assuming uniform scale for radius calculation
+            float sphere_world_radius = col.radius * soccer_ball_scale_factor;
 
-            if (SphereBoxCollision(col.pos, col.radius, bunny_limits)) {
-                printf("colidiu");
+            // Bunny's model transformation
+            // The bunny_limits variable holds the AABB in the bunny's local space.
+            glm::mat4 bunny_model_transform = Matrix_Translate(g_BunnyPosition.x, g_BunnyPosition.y, g_BunnyPosition.z)
+                                          * Matrix_Rotate_Z(g_AngleZ)
+                                          * Matrix_Rotate_Y(g_AngleY)
+                                          * Matrix_Rotate_X(g_AngleX);
+            glm::mat4 bunny_model_transform_inv = glm::inverse(bunny_model_transform);
+
+            // Transform sphere's world center into bunny's local space
+            glm::vec3 sphere_center_in_bunny_local = glm::vec3(bunny_model_transform_inv * glm::vec4(sphere_world_center, 1.0f));
+            
+            // Sphere's radius in bunny's local space.
+            // Since the bunny is not scaled in its model matrix, the world radius can be used.
+            // If the bunny had a uniform scale 's_b', this would be sphere_world_radius / s_b.
+            float sphere_radius_for_collision_in_bunny_local = sphere_world_radius;
+
+            if (SphereBoxCollision(sphere_center_in_bunny_local, sphere_radius_for_collision_in_bunny_local, bunny_limits)) {
+                printf("colidiu com a bola\n");
             }
         }
 

@@ -7,5 +7,5 @@
 
 bool AABBCollision(const glm::vec3& min1, const glm::vec3& max1, const glm::vec3& min2, const glm::vec3& max2);
 bool SphereCollision(const glm::vec3& center1, float radius1, const glm::vec3& center2, float radius2);
-bool SphereBoxCollision(glm::vec3& center, float radius, ColliderBox box);
+bool SphereBoxCollision(const glm::vec3& center, float radius, ColliderBox box);
 #endif
