@@ -381,5 +381,7 @@ CMakeFiles/main.dir/src/main.cpp.o: \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/mmintrin.h \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/mm_malloc.h \
  /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/utils.h \
+ /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/src/collisions.hpp \
+ /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/src/object.hpp \
  /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/matrices.h \
- /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/src/collisions.cpp
+ /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/src/scene_object.hpp

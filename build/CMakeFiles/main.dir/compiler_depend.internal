@@ -259,7 +259,9 @@ CMakeFiles/main.dir/src/main.cpp.o
  /home/alef/Área de trabalho/UFRGS/FCG/final/trabalho-fcg/include/stb_image.h
  /home/alef/Área de trabalho/UFRGS/FCG/final/trabalho-fcg/include/tiny_obj_loader.h
  /home/alef/Área de trabalho/UFRGS/FCG/final/trabalho-fcg/include/utils.h
- /home/alef/Área de trabalho/UFRGS/FCG/final/trabalho-fcg/src/collisions.cpp
+ /home/alef/Área de trabalho/UFRGS/FCG/final/trabalho-fcg/src/collisions.hpp
+ /home/alef/Área de trabalho/UFRGS/FCG/final/trabalho-fcg/src/object.hpp
+ /home/alef/Área de trabalho/UFRGS/FCG/final/trabalho-fcg/src/scene_object.hpp
  /usr/include/alloca.h
  /usr/include/asm-generic/errno-base.h
  /usr/include/asm-generic/errno.h

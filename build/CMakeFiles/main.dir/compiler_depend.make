@@ -257,7 +257,9 @@ CMakeFiles/main.dir/src/main.cpp.o: /home/alef/Área\ de\ trabalho/UFRGS/FCG/fin
   /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/stb_image.h \
   /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/tiny_obj_loader.h \
   /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/utils.h \
-  /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/src/collisions.cpp \
+  /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/src/collisions.hpp \
+  /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/src/object.hpp \
+  /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/src/scene_object.hpp \
   /usr/include/alloca.h \
   /usr/include/asm-generic/errno-base.h \
   /usr/include/asm-generic/errno.h \
@@ -1232,6 +1234,10 @@ CMakeFiles/main.dir/src/tiny_obj_loader.cpp.o: /home/alef/Área\ de\ trabalho/UF
 
 /usr/include/c++/13/bits/codecvt.h:
 
+/usr/include/c++/13/bits/basic_ios.tcc:
+
+/usr/include/c++/13/bits/basic_ios.h:
+
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/vector_bool2_precision.hpp:
 
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/vector_bool3.hpp:
@@ -1253,8 +1259,6 @@ CMakeFiles/main.dir/src/tiny_obj_loader.cpp.o: /home/alef/Área\ de\ trabalho/UF
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/matrix_float4x3.hpp:
 
 /usr/include/x86_64-linux-gnu/bits/time64.h:
-
-/usr/include/c++/13/bits/basic_ios.h:
 
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/matrix_double4x3.hpp:
 
@@ -1314,6 +1318,8 @@ CMakeFiles/main.dir/src/tiny_obj_loader.cpp.o: /home/alef/Área\ de\ trabalho/UF
 
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/matrix_double3x3.hpp:
 
+/home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/src/object.hpp:
+
 /usr/include/c++/13/cstdio:
 
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/detail/type_mat3x3.hpp:
@@ -1356,10 +1362,6 @@ CMakeFiles/main.dir/src/tiny_obj_loader.cpp.o: /home/alef/Área\ de\ trabalho/UF
 
 /usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h:
 
-/usr/include/c++/13/string:
-
-/usr/include/x86_64-linux-gnu/bits/stdint-intn.h:
-
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/matrix_float3x2_precision.hpp:
 
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/mat2x4.hpp:
@@ -1387,8 +1389,6 @@ CMakeFiles/main.dir/src/tiny_obj_loader.cpp.o: /home/alef/Área\ de\ trabalho/UF
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/matrix_float2x4_precision.hpp:
 
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/detail/type_mat3x4.inl:
-
-/usr/include/x86_64-linux-gnu/bits/struct_rwlock.h:
 
 /usr/include/c++/13/bits/requires_hosted.h:
 
@@ -1610,6 +1610,10 @@ CMakeFiles/main.dir/src/tiny_obj_loader.cpp.o: /home/alef/Área\ de\ trabalho/UF
 
 /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h:
 
+/usr/include/x86_64-linux-gnu/bits/struct_rwlock.h:
+
+/home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/src/scene_object.hpp:
+
 /usr/include/x86_64-linux-gnu/bits/types/time_t.h:
 
 /usr/include/x86_64-linux-gnu/bits/waitflags.h:
@@ -1681,6 +1685,12 @@ CMakeFiles/main.dir/src/tiny_obj_loader.cpp.o: /home/alef/Área\ de\ trabalho/UF
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/matrix_double3x3_precision.hpp:
 
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/matrix_transform.hpp:
+
+/usr/include/c++/13/string:
+
+/usr/include/x86_64-linux-gnu/bits/stdint-intn.h:
+
+/home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/src/collisions.hpp:
 
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/vector_int4_precision.hpp:
 
@@ -1814,6 +1824,12 @@ CMakeFiles/main.dir/src/tiny_obj_loader.cpp.o: /home/alef/Área\ de\ trabalho/UF
 
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/vector_bool1.hpp:
 
+/usr/include/x86_64-linux-gnu/bits/wchar.h:
+
+/home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/vector_relational.hpp:
+
+/home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/vector_int1.hpp:
+
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/vector_uint1_precision.hpp:
 
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/matrix_projection.hpp:
@@ -1866,16 +1882,6 @@ CMakeFiles/main.dir/src/tiny_obj_loader.cpp.o: /home/alef/Área\ de\ trabalho/UF
 
 /home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/utils.h:
 
-/usr/include/x86_64-linux-gnu/bits/wchar.h:
-
-/home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/vector_relational.hpp:
-
-/home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/include/glm/ext/vector_int1.hpp:
-
-/home/alef/Área\ de\ trabalho/UFRGS/FCG/final/trabalho-fcg/src/collisions.cpp:
-
 /usr/include/c++/13/bits/alloc_traits.h:
 
 /usr/include/c++/13/bits/allocator.h:
-
-/usr/include/c++/13/bits/basic_ios.tcc:

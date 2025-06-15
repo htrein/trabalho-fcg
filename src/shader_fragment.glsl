@@ -21,6 +21,7 @@ uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
 uniform sampler2D TextureImage3;
+uniform sampler2D TextureImage4;
 
 
 // Identificador que define qual objeto está sendo desenhado no momento
@@ -31,6 +32,8 @@ uniform sampler2D TextureImage3;
 // NOVO
 #define SKY_SPHERE 4
 #define BOX 5
+#define SOCCER_BALL 6
+
 uniform int object_id;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
@@ -155,10 +158,14 @@ void main()
     float V = 0.0;
     vec3 tex_obj;
 
-    if (object_id == BUNNY) {
+    if (object_id == BUNNY  || object_id == SOCCER_BALL) {
         U = texcoords.x;
         V = texcoords.y;
-        tex_obj = texture(TextureImage0, vec2(U,V)).rgb;
+        if(object_id == BUNNY){
+            tex_obj = texture(TextureImage0, vec2(U,V)).rgb;
+        } else if(object_id == SOCCER_BALL){
+            tex_obj = texture(TextureImage4, vec2(U,V)).rgb;
+        }
     } else if ( object_id == CHAIR ){
         U = texcoords.x;
         V = texcoords.y;
