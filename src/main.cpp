@@ -256,10 +256,13 @@ int main(int argc, char* argv[])
     ObjModel boxmodel = ComputeObject("../../data/woodenCrate.obj", &g_VirtualScene);
 
     ColliderBox box_limits = createBoundingBox(boxmodel.attrib);
-    float scale = 0.2f;
-    float spacing = 1.5f;
-    float step_height = 0.4f;
-    for (int i = 0; i < 3; ++i) {
+    float base_scale = 0.3f;
+    float base_spacing = 1.0f;
+    float step_height = 0.7f;
+
+    for (int i = 0; i < 5; ++i) {
+        float scale = base_scale - i * 0.05f;
+        float spacing = base_spacing + i * 0.5f;
         glm::vec3 pos(i * spacing, i * step_height, 0.0f);
         glm::vec3 bbox_min = box_limits.bbox_min * scale;
         glm::vec3 bbox_max = box_limits.bbox_max * scale;
@@ -278,7 +281,9 @@ int main(int argc, char* argv[])
     
     ObjModel chair = ComputeObject("../../data/leather_chair.obj", &g_VirtualScene);
     ColliderBox chair_limits = createBoundingBox(chair.attrib);
-    chair_limits.pos = glm::vec3(0.0f, -1.0f, 0.0f);
+    chair_limits.pos = glm::vec3(-2.0f, -1.0f, 0.0f);
+    chair_limits.bbox_min *= glm::vec3(2.0f, 1.0f, 2.0f);
+    chair_limits.bbox_max *= glm::vec3(2.0f, 1.0f, 2.0f);
     box_colliders.push_back(chair_limits);
     
     if ( argc > 1 )
@@ -336,7 +341,7 @@ int main(int argc, char* argv[])
         glm::vec4 camera_position_c, camera_lookat_l, camera_view_vector, camera_up_vector;
         camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
         if(firstpCamera){
-            camera_position_c = glm::vec4(g_BunnyPosition, 1.0f);
+            camera_position_c = glm::vec4(g_BunnyPosition.x, g_BunnyPosition.y + 0.5f, g_BunnyPosition.z, 1.0f);
             camera_view_vector = -(glm::vec4(x,y,z,0.0f));
             camera_lookat_l = camera_position_c + glm::vec4(x,y,z,0.0f);
         } else {
@@ -356,15 +361,26 @@ int main(int argc, char* argv[])
         float camera_speed = g_BunnySpeed * delta_time;
 
         static glm::vec3 previous_bunny_position = g_BunnyPosition;
+        glm::vec3 move_direction(0.0f);
 
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-            g_BunnyPosition += front_vector * camera_speed;
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-            g_BunnyPosition -= front_vector * camera_speed;
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-            g_BunnyPosition -= right_vector * camera_speed;
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-            g_BunnyPosition += right_vector * camera_speed;
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
+            g_BunnyPosition += front_vector * camera_speed; move_direction += front_vector;
+        }
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
+            g_BunnyPosition -= front_vector * camera_speed; move_direction -= front_vector;
+        }
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
+            g_BunnyPosition -= right_vector * camera_speed; move_direction -= right_vector;
+        }
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
+            g_BunnyPosition += right_vector * camera_speed; move_direction += right_vector;
+        }
+        if (glm::length(move_direction) > 0.0f)
+        {
+            move_direction = glm::normalize(move_direction);
+            float target_angle = atan2(-move_direction.x, -move_direction.z);
+            g_AngleY = target_angle;
+        }
 
         static bool jumping = false;
         static float jump_velocity = 0.0f;
@@ -537,10 +553,10 @@ int main(int argc, char* argv[])
         glDepthMask(GL_TRUE); // Faz voltar os parâmetros originais
 
         // Desenhamos o modelo da esfera
-        model = Matrix_Translate(-1.0f,0.0f,0.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("the_sphere");
+        // model = Matrix_Translate(-1.0f,0.0f,0.0f);
+        // glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        // glUniform1i(g_object_id_uniform, SPHERE);
+        // DrawVirtualObject("the_sphere");
 
         // Desenhamos o modelo do coelho
         model = Matrix_Translate(g_BunnyPosition.x, g_BunnyPosition.y, g_BunnyPosition.z)
@@ -552,24 +568,43 @@ int main(int argc, char* argv[])
         DrawVirtualObject("hare");
 
         glActiveTexture(GL_TEXTURE3);
-        for (int i = 0; i < 3; ++i)
+        glm::mat4 model2 = Matrix_Identity();
+        PushMatrix(model2);
+        for (int i = 0; i < 5; ++i)
         {
-            float scale = 0.2f;
-            float spacing = 1.5f; 
-            float step_height = 0.4f; 
-            model = Matrix_Translate(i * spacing, i * step_height, 0.0f) * Matrix_Scale(scale, scale, scale);
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+            PushMatrix(model2);
+
+            // Escala diminuindo a cada passo (ex: começa em 0.3 e diminui 0.05 por caixa)
+            float base_scale = 0.3f;
+            float scale = base_scale - i * 0.05f;
+
+            // Espaçamento aumentando a cada passo (ex: começa em 1.0 e cresce 0.5 por caixa)
+            float base_spacing = 1.0f;
+            float spacing = base_spacing + i * 0.5f;
+
+            // Altura também pode aumentar se quiser
+            float step_height = 0.7f * i;
+
+            // Transformações
+            model2 = model2 * Matrix_Translate(i * spacing, step_height, 0.0f);
+            model2 = model2 * Matrix_Scale(scale, scale, scale);
+
+            // Enviar pra GPU
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model2));
             glUniform1i(g_object_id_uniform, BOX);
             DrawVirtualObject("Crate_Plane.005");
+
+            PopMatrix(model2);
         }
+        PopMatrix(model2);
 
         // Desenhamos o modelo do plano
-        model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, PLANE);
-        DrawVirtualObject("the_plane");
+        // model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
+        // glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        // glUniform1i(g_object_id_uniform, PLANE);
+        // DrawVirtualObject("the_plane");
 
-        model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
+        model = Matrix_Translate(-2.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, CHAIR);
         DrawVirtualObject("leather_chair");
