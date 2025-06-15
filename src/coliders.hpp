@@ -21,6 +21,6 @@ struct ColliderSphere{ //estrutura para um objeto colidível esférico
 };
 
 ColliderBox createBoundingBox(const tinyobj::attrib_t& atrib);
-ColliderSphere createBoundingSphere(const tinyobj::attrib_t& atrib);
+ColliderSphere createBoundingSphereRitter(const tinyobj::attrib_t& atrib);
 
 #endif

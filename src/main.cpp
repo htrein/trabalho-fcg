@@ -56,8 +56,7 @@
 #define SOCCER_BALL 6
 
 std::vector<ColliderBox> box_colliders; //vetor de objetos colidíveis
-ColliderBox createBoundingBox(const tinyobj::attrib_t& atrib); //funcao para criar bounding boxes apartir de .obj
-std::pair<glm::vec3, float> createBoundingSphereRitter(const tinyobj::attrib_t& attrib); //funcao para criar bounding spheres a partir de .obj
+std::vector<ColliderSphere> sphere_colliders;
 
 // Declaração de funções utilizadas para pilha de matrizes de modelagem.
 void PushMatrix(glm::mat4 M);
@@ -270,7 +269,8 @@ int main(int argc, char* argv[])
     ObjModel bunnymodel = ComputeObject("../../data/hare.obj", &g_VirtualScene);
     
     ObjModel soccer_ball = ComputeObject("../../data/soccer_ball.obj", &g_VirtualScene);
-    // colliders.push_back({glm::vec3(5.0f, 1.0f, 0.0f),
+    ColliderSphere collider_soccer = createBoundingSphereRitter(soccer_ball.attrib);
+    sphere_colliders.push_back(collider_soccer);
 
     ColliderBox bunny_limits = createBoundingBox(bunnymodel.attrib);
     
@@ -432,6 +432,16 @@ int main(int argc, char* argv[])
                 }
             }
         }
+
+        // Teste bruto da colisao do coelho e da bola de futebol
+        // Criar uma funcao que simplifique
+        for (auto& col : sphere_colliders) {
+
+            if (SphereBoxCollision(col.pos, col.radius, bunny_limits)) {
+                printf("colidiu");
+            }
+        }
+
         //queda
         if (!on_top && g_BunnyPosition.y > 0.0f && !jumping) {
             jumping = true;
