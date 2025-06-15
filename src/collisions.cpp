@@ -12,7 +12,17 @@ bool AABBCollision(const glm::vec3& min1, const glm::vec3& max1, const glm::vec3
     return overlapX && overlapY && overlapZ;
 }
 
-bool SphereCollision(const glm::vec3& center1, float radius1, const glm::vec3& center2, float radius2){
+bool SphereCollision(glm::vec3& center1, float radius1, glm::vec3& center2, float radius2){
+    float distance;
+    float sumRadius;
+    sumRadius = radius1 + radius2;
+    // Distancia entre os centros das esferas
+    distance = glm::distance(center1, center2);
+    // Se a distancia for menor, as cascas das esferas estao interceptando
+    return distance <= sumRadius;
+}
+
+bool SphereBoxCollision(const glm::vec3& center1, float radius1, const glm::vec3& center2, float radius2){
     float distance;
     float sumRadius;
     sumRadius = radius1 + radius2;

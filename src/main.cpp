@@ -38,13 +38,13 @@
 
 // Headers da biblioteca para carregar modelos obj
 #include <tiny_obj_loader.h>
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
 #include "collisions.hpp"
 #include "object.hpp"
+#include "coliders.hpp"
 
 // NOVO
 #define SPHERE 0
@@ -55,14 +55,8 @@
 #define BOX 5
 #define SOCCER_BALL 6
 
-
-struct Collider{ //estrutura para um objeto colidível
-    glm::vec3 pos;
-    glm::vec3 bbox_min;
-    glm::vec3 bbox_max;
-};
-std::vector<Collider> colliders; //vetor de objetos colidíveis
-Collider createBoundingBox(const tinyobj::attrib_t& atrib); //funcao para criar bounding boxes apartir de .obj
+std::vector<ColliderBox> box_colliders; //vetor de objetos colidíveis
+ColliderBox createBoundingBox(const tinyobj::attrib_t& atrib); //funcao para criar bounding boxes apartir de .obj
 std::pair<glm::vec3, float> createBoundingSphereRitter(const tinyobj::attrib_t& attrib); //funcao para criar bounding spheres a partir de .obj
 
 // Declaração de funções utilizadas para pilha de matrizes de modelagem.
@@ -262,7 +256,7 @@ int main(int argc, char* argv[])
 
     ObjModel boxmodel = ComputeObject("../../data/woodenCrate.obj", &g_VirtualScene);
 
-    Collider box_limits = createBoundingBox(boxmodel.attrib);
+    ColliderBox box_limits = createBoundingBox(boxmodel.attrib);
     float scale = 0.2f;
     float spacing = 1.5f;
     float step_height = 0.4f;
@@ -270,7 +264,7 @@ int main(int argc, char* argv[])
         glm::vec3 pos(i * spacing, i * step_height, 0.0f);
         glm::vec3 bbox_min = box_limits.bbox_min * scale;
         glm::vec3 bbox_max = box_limits.bbox_max * scale;
-        colliders.push_back({pos, bbox_min, bbox_max});
+        box_colliders.push_back({pos, bbox_min, bbox_max});
     }
 
     ObjModel bunnymodel = ComputeObject("../../data/hare.obj", &g_VirtualScene);
@@ -278,14 +272,14 @@ int main(int argc, char* argv[])
     ObjModel soccer_ball = ComputeObject("../../data/soccer_ball.obj", &g_VirtualScene);
     // colliders.push_back({glm::vec3(5.0f, 1.0f, 0.0f),
 
-    Collider bunny_limits = createBoundingBox(bunnymodel.attrib);
+    ColliderBox bunny_limits = createBoundingBox(bunnymodel.attrib);
     
     ComputeObject("../../data/plane.obj", &g_VirtualScene);
     
     ObjModel chair = ComputeObject("../../data/leather_chair.obj", &g_VirtualScene);
-    Collider chair_limits = createBoundingBox(chair.attrib);
+    ColliderBox chair_limits = createBoundingBox(chair.attrib);
     chair_limits.pos = glm::vec3(0.0f, -1.0f, 0.0f);
-    colliders.push_back(chair_limits);
+    box_colliders.push_back(chair_limits);
     
     if ( argc > 1 )
     {
@@ -393,7 +387,7 @@ int main(int argc, char* argv[])
         bool on_top = false; //verifica se o personagem está em cima de um obj
         const float folga = 0.01f; //folga para evitar jittering
         //para cada objeto colidivel testa se há colisao
-        for (const auto& col : colliders) {
+        for (const auto& col : box_colliders) {
             glm::vec3 obj_min = col.pos + col.bbox_min;
             glm::vec3 obj_max = col.pos + col.bbox_max;
 
@@ -1232,85 +1226,4 @@ GLuint LoadTextureFromFile(const char* filename)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     stbi_image_free(data);
     return tex;
-}
-
-Collider createBoundingBox(const tinyobj::attrib_t& atrib){
-    float min_x = std::numeric_limits<float>::max();
-    float min_y = std::numeric_limits<float>::max();
-    float min_z = std::numeric_limits<float>::max();
-    float max_x = std::numeric_limits<float>::lowest();
-    float max_y = std::numeric_limits<float>::lowest();
-    float max_z = std::numeric_limits<float>::lowest();
-    for (size_t i = 0; i < atrib.vertices.size(); i += 3)
-    {
-        float vx = atrib.vertices[i + 0];
-        float vy = atrib.vertices[i + 1];
-        float vz = atrib.vertices[i + 2];
-
-        if (vx < min_x) min_x = vx;
-        if (vy < min_y) min_y = vy;
-        if (vz < min_z) min_z = vz;
-        if (vx > max_x) max_x = vx;
-        if (vy > max_y) max_y = vy;
-        if (vz > max_z) max_z = vz;
-    }
-    glm::vec3 bbox_min = glm::vec3(min_x, min_y, min_z);
-    glm::vec3 bbox_max = glm::vec3(max_x, max_y, max_z);
-    glm::vec3 center = (bbox_min + bbox_max) * 0.5f;
-
-    return {center, bbox_min, bbox_max};
-}
-
-// Criacao de uma bounding-sphere baseado no metodo de Ritter (escolhido por ser mais preciso)
-std::pair<glm::vec3, float> createBoundingSphereRitter(const tinyobj::attrib_t& attrib) {
-    if (attrib.vertices.empty()) {
-        return {glm::vec3(0.0f), 0.0f};
-    }
-
-    // Encontra os pontos mais extremos
-    glm::vec3 x_min_pt, x_max_pt, y_min_pt, y_max_pt, z_min_pt, z_max_pt;
-    x_min_pt.x = y_min_pt.y = z_min_pt.z = std::numeric_limits<float>::max();
-    x_max_pt.x = y_max_pt.y = z_max_pt.z = std::numeric_limits<float>::lowest();
-
-    for (size_t i = 0; i < attrib.vertices.size(); i += 3) {
-        glm::vec3 pt(attrib.vertices[i], attrib.vertices[i+1], attrib.vertices[i+2]);
-        if (pt.x < x_min_pt.x) x_min_pt = pt;
-        if (pt.x > x_max_pt.x) x_max_pt = pt;
-        if (pt.y < y_min_pt.y) y_min_pt = pt;
-        if (pt.y > y_max_pt.y) y_max_pt = pt;
-        if (pt.z < z_min_pt.z) z_min_pt = pt;
-        if (pt.z > z_max_pt.z) z_max_pt = pt;
-    }
-
-    // Monta o par mais distante e calcula sua distancia
-    float dist_sq_x = glm::distance(x_max_pt, x_min_pt);
-    float dist_sq_y = glm::distance(y_max_pt, y_min_pt);
-    float dist_sq_z = glm::distance(z_max_pt, z_min_pt);
-
-    glm::vec3 p1 = x_min_pt, p2 = x_max_pt;
-    if (dist_sq_y > dist_sq_x && dist_sq_y > dist_sq_z) {
-        p1 = y_min_pt; p2 = y_max_pt;
-    } else if (dist_sq_z > dist_sq_x && dist_sq_z > dist_sq_y) {
-        p1 = z_min_pt; p2 = z_max_pt;
-    }
-
-    // Calcula centro e raio da esfera
-    glm::vec3 center = (p1 + p2) * 0.5f;
-    float radius = glm::distance(p1, center);
-
-    // Verifica mais uma vez para confirmar se os pontos eram os mais distante
-    // Se isto acabar atrapalhando muito o desempenho, talvez seja melhor tirar
-    for (size_t i = 0; i < attrib.vertices.size(); i += 3) {
-        glm::vec3 pt(attrib.vertices[i], attrib.vertices[i+1], attrib.vertices[i+2]);
-        float dist_sq = glm::distance(pt, center);
-        if (dist_sq > (radius * radius)) {
-            float dist = std::sqrt(dist_sq);
-            glm::vec3 direction = (pt - center) / dist;
-            glm::vec3 opposite_pt = center - direction * radius;
-            center = (pt + opposite_pt) * 0.5f;
-            radius = glm::distance(pt, center);
-        }
-    }
-
-    return {center, radius};
 }
