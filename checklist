@@ -2,7 +2,7 @@
 
 ## Modelos e Geometria
 - [ V ] Incluir pelo menos 1 modelo geométrico complexo (≥ cow.obj)
-- [ ] Criar múltiplas instâncias (usar Model Matrix) para pelo menos 1 objeto
+- [ V ] Criar múltiplas instâncias (usar Model Matrix) para pelo menos 1 objeto
 
 ## Interação
 - [ ] Implementar controles de usuário para transformações geométricas (translação, rotação, escala)
@@ -17,8 +17,8 @@
 - [ ] Ter pelo menos 1 objeto com shading Phong
 
 ## Texturas
-- [ ] Todos os objetos devem usar texturas para cores (não cores sólidas)
-- [ ] Utilizar no mínimo 3 imagens de textura distintas
+- [ V ] Todos os objetos devem usar texturas para cores (não cores sólidas)
+- [ V ] Utilizar no mínimo 3 imagens de textura distintas
 
 ## Colisões
 - [ ] Implementar 3 tipos de testes de intersecção (em collisions.cpp)

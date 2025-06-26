@@ -102,6 +102,8 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 // NOVO
 GLuint LoadTextureFromFile(const char* filename);
 void LoadTextureImage(const char* filename);
+//NOVO-BEZIER
+glm::vec3 BezierCubic(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, float t);
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -166,6 +168,15 @@ GLint g_camera_position_uniform;
 bool firstpCamera = false;
 glm::vec3 g_BunnyPosition = glm::vec3(3.0f, -1.0f, 0.0f);
 float g_BunnySpeed = 2.0f;
+
+//NOVO-BEZIER
+glm::vec3 bezier_p0 = glm::vec3(8.0f, 2.8f, 0.0f);   
+glm::vec3 bezier_p1 = glm::vec3(9.5f, 4.5f,  2.0f);   
+glm::vec3 bezier_p2 = glm::vec3(11.0f, 2.0f, -2.0f);  
+glm::vec3 bezier_p3 = glm::vec3(12.5f, 3.5f, 0.0f);  
+float bezier_time = 0.0f;
+float bezier_speed = 0.08f; 
+int bezier_direction = 1;
 
 int main(int argc, char* argv[])
 {
@@ -356,6 +367,18 @@ int main(int argc, char* argv[])
         float delta_time = current_time - last_time;
         last_time = current_time;
 
+        //NOVO-BEZIER
+        bezier_time += bezier_speed * delta_time * bezier_direction;
+        if (bezier_time > 1.0f) {
+            bezier_time = 2.0f - bezier_time; 
+            bezier_direction = -1;
+        }
+        if (bezier_time < 0.0f) {
+            bezier_time = -bezier_time; 
+            bezier_direction = 1;
+        }
+        glm::vec3 obstacle_pos = BezierCubic(bezier_p0, bezier_p1, bezier_p2, bezier_p3, bezier_time);
+
         glm::vec3 front_vector = glm::normalize(glm::vec3(camera_view_vector.x, 0.0f, camera_view_vector.z));
         glm::vec3 right_vector = glm::normalize(glm::cross(front_vector, glm::vec3(0.0f, 1.0f, 0.0f)));
         float camera_speed = g_BunnySpeed * delta_time;
@@ -455,7 +478,7 @@ int main(int argc, char* argv[])
             // Sphere (soccer ball) properties
             // col.pos and col.radius are in the local space of the soccer ball model.
             // The soccer ball is drawn with: model = Matrix_Translate(5.0f, 1.0f, 0.0f) * Matrix_Scale(2.0f, 2.0f, 2.0f);
-            glm::mat4 model_soccer_transform = Matrix_Translate(5.0f, 1.0f, 0.0f) * Matrix_Scale(2.0f, 2.0f, 2.0f);
+glm::mat4 model_soccer_transform = Matrix_Translate(obstacle_pos.x, obstacle_pos.y, obstacle_pos.z) * Matrix_Scale(2.0f, 2.0f, 2.0f);
             glm::vec3 sphere_world_center = glm::vec3(model_soccer_transform * glm::vec4(col.pos, 1.0f));
             float soccer_ball_scale_factor = 2.0f; // Assuming uniform scale for radius calculation
             float sphere_world_radius = col.radius * soccer_ball_scale_factor;
@@ -552,11 +575,10 @@ int main(int argc, char* argv[])
         glCullFace(GL_BACK);
         glDepthMask(GL_TRUE); // Faz voltar os parâmetros originais
 
-        // Desenhamos o modelo da esfera
-        // model = Matrix_Translate(-1.0f,0.0f,0.0f);
-        // glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        // glUniform1i(g_object_id_uniform, SPHERE);
-        // DrawVirtualObject("the_sphere");
+        glm::mat4 model_obstacle = Matrix_Translate(obstacle_pos.x, obstacle_pos.y, obstacle_pos.z) * Matrix_Scale(2.0f, 2.0f, 2.0f);
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model_obstacle));
+        glUniform1i(g_object_id_uniform, SOCCER_BALL); 
+        DrawVirtualObject("soccer_ball"); 
 
         // Desenhamos o modelo do coelho
         model = Matrix_Translate(g_BunnyPosition.x, g_BunnyPosition.y, g_BunnyPosition.z)
@@ -574,22 +596,17 @@ int main(int argc, char* argv[])
         {
             PushMatrix(model2);
 
-            // Escala diminuindo a cada passo (ex: começa em 0.3 e diminui 0.05 por caixa)
             float base_scale = 0.3f;
             float scale = base_scale - i * 0.05f;
 
-            // Espaçamento aumentando a cada passo (ex: começa em 1.0 e cresce 0.5 por caixa)
             float base_spacing = 1.0f;
             float spacing = base_spacing + i * 0.5f;
 
-            // Altura também pode aumentar se quiser
             float step_height = 0.7f * i;
 
-            // Transformações
             model2 = model2 * Matrix_Translate(i * spacing, step_height, 0.0f);
             model2 = model2 * Matrix_Scale(scale, scale, scale);
 
-            // Enviar pra GPU
             glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model2));
             glUniform1i(g_object_id_uniform, BOX);
             DrawVirtualObject("Crate_Plane.005");
@@ -608,11 +625,6 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, CHAIR);
         DrawVirtualObject("leather_chair");
-
-        model = Matrix_Translate(5.0f, 1.0f, 0.0f) * Matrix_Scale(2.0f, 2.0f, 2.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SOCCER_BALL);
-        DrawVirtualObject("soccer_ball");
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -776,7 +788,6 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage3"), 3);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage4"), 4);
     glUseProgram(0);
-
 }
 
 // Função que pega a matriz M e guarda a mesma no topo da pilha
@@ -798,10 +809,6 @@ void PopMatrix(glm::mat4& M)
         g_MatrixStack.pop();
     }
 }
-
-
-
-
 
 // Carrega um Vertex Shader de um arquivo GLSL. Veja definição de LoadShader() abaixo.
 GLuint LoadShader_Vertex(const char* filename)
@@ -1294,4 +1301,18 @@ GLuint LoadTextureFromFile(const char* filename)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     stbi_image_free(data);
     return tex;
+}
+glm::vec3 BezierCubic(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, float t)
+{
+    float u = 1.0f - t;
+    float tt = t * t;
+    float uu = u * u;
+    float uuu = uu * u;
+    float ttt = tt * t;
+
+    glm::vec3 p = uuu * p0; // (1-t)^3 * P0
+    p += 3 * uu * t * p1;   // 3*(1-t)^2 * t * P1
+    p += 3 * u * tt * p2;   // 3*(1-t) * t^2 * P2
+    p += ttt * p3;          // t^3 * P3
+    return p;
 }
