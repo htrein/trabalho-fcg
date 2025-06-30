@@ -441,10 +441,8 @@ int main(int argc, char* argv[])
         // Teste bruto da colisao do coelho e da bola de futebol
         // Criar uma funcao que simplifique
         for (auto& col : sphere_colliders) {
-            // Sphere (soccer ball) properties
-            // col.pos and col.radius are in the local space of the soccer ball model.
-            // The soccer ball is drawn with: model = Matrix_Translate(5.0f, 1.0f, 0.0f) * Matrix_Scale(2.0f, 2.0f, 2.0f);
-glm::mat4 model_soccer_transform = Matrix_Translate(obstacle_pos.x, obstacle_pos.y - 3, obstacle_pos.z) * Matrix_Scale(3.0f, 3.0f, .0f);
+            // Converte
+            glm::mat4 model_soccer_transform = Matrix_Translate(obstacle_pos.x, obstacle_pos.y, obstacle_pos.z) * Matrix_Scale(3.0f, 3.0f, .0f);
             glm::vec3 sphere_world_center = glm::vec3(model_soccer_transform * glm::vec4(col.pos, 1.0f));
             float soccer_ball_scale_factor = 2.0f; // Assuming uniform scale for radius calculation
             float sphere_world_radius = col.radius * soccer_ball_scale_factor;
@@ -465,12 +463,10 @@ glm::mat4 model_soccer_transform = Matrix_Translate(obstacle_pos.x, obstacle_pos
             // If the bunny had a uniform scale 's_b', this would be sphere_world_radius / s_b.
             float sphere_radius_for_collision_in_bunny_local = sphere_world_radius;
 
-            glm::vec4 intersection_point = glm::vec4(0.0, 0.0, 0.0, 1.0);
+            glm::vec3 intersection_point = glm::vec3(0.0, 0.0, 0.0);
             if (SphereBoxCollision(sphere_center_in_bunny_local, sphere_radius_for_collision_in_bunny_local, bunny_limits, &intersection_point)) {
-                
-                
                 // Movimenta o coelho junto com a bola
-                (g_BunnyPosition).y = intersection_point.y;// - bunny_limits.bbox_min.y;
+                g_BunnyPosition.y = intersection_point.y + g_BunnyPosition.y - bunny_limits.bbox_min.y;
                 if (jump_velocity <= 0.0f) {
                     jumping = false;
                     jump_velocity = 0.0f;
@@ -559,7 +555,7 @@ glm::mat4 model_soccer_transform = Matrix_Translate(obstacle_pos.x, obstacle_pos
         glCullFace(GL_BACK);
         glDepthMask(GL_TRUE); // Faz voltar os parâmetros originais
 
-        glm::mat4 model_obstacle = Matrix_Translate(obstacle_pos.x, obstacle_pos.y - 3, obstacle_pos.z) * Matrix_Scale(2.0f, 2.0f, 2.0f);
+        glm::mat4 model_obstacle = Matrix_Translate(obstacle_pos.x, obstacle_pos.y, obstacle_pos.z) * Matrix_Scale(2.0f, 2.0f, 2.0f);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model_obstacle));
         glUniform1i(g_object_id_uniform, SOCCER_BALL); 
         DrawVirtualObject("soccer_ball"); 
