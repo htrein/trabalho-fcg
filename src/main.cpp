@@ -257,6 +257,7 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/Textures/fundo.jpg"); // TextureImage2
     LoadTextureImage("../../data/Textures/Wooden Crate_Crate_BaseColor.png"); // TextureImage3
     LoadTextureImage("../../data/Textures/Football_Diffuse.jpg"); // TextureImage4
+    LoadTextureImage("../../data/Textures/plane.jpg"); // TextureImage5
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ComputeObject("../../data/sphere.obj", &g_VirtualScene);
@@ -432,43 +433,8 @@ int main(int argc, char* argv[])
 
             if (AABBCollision(bunny_min, bunny_max, obj_min, obj_max)) {
 
-                if (previous_bunny_position.y >= obj_max.y - folga && bunny_min.y < obj_max.y + folga) {
-                    //y
-                    g_BunnyPosition.y = obj_max.y - bunny_limits.bbox_min.y;
-                    bunny_min = g_BunnyPosition + bunny_limits.bbox_min;
-                    bunny_max = g_BunnyPosition + bunny_limits.bbox_max;
-                    if (jump_velocity <= 0.0f) {
-                        jumping = false;
-                        jump_velocity = 0.0f;
-                        on_top = true;
-                    }
-                } else {
-                    //x
-                    glm::vec3 try_pos = g_BunnyPosition;
-                    try_pos.x = previous_bunny_position.x;
-                    glm::vec3 try_min = try_pos + bunny_limits.bbox_min;
-                    glm::vec3 try_max = try_pos + bunny_limits.bbox_max;
-                    if (!AABBCollision(try_min, try_max, obj_min, obj_max)) {
-                        g_BunnyPosition.x = previous_bunny_position.x;
-                        bunny_min = g_BunnyPosition + bunny_limits.bbox_min;
-                        bunny_max = g_BunnyPosition + bunny_limits.bbox_max;
-                        continue;
-                    }
-                    //z
-                    try_pos = g_BunnyPosition;
-                    try_pos.z = previous_bunny_position.z;
-                    try_min = try_pos + bunny_limits.bbox_min;
-                    try_max = try_pos + bunny_limits.bbox_max;
-                    if (!AABBCollision(try_min, try_max, obj_min, obj_max)) {
-                        g_BunnyPosition.z = previous_bunny_position.z;
-                        bunny_min = g_BunnyPosition + bunny_limits.bbox_min;
-                        bunny_max = g_BunnyPosition + bunny_limits.bbox_max;
-                        continue;
-                    }
-                    g_BunnyPosition = previous_bunny_position;
-                    bunny_min = g_BunnyPosition + bunny_limits.bbox_min;
-                    bunny_max = g_BunnyPosition + bunny_limits.bbox_max;
-                }
+                // Se o coelho estava acima do objeto, mas seu limite inferior já estava dentro
+                collisionTreatmentAABB(&g_BunnyPosition, bunny_limits, obj_min, obj_max, previous_bunny_position, folga, &jumping, &on_top, &jump_velocity);
             }
         }
 
@@ -478,7 +444,7 @@ int main(int argc, char* argv[])
             // Sphere (soccer ball) properties
             // col.pos and col.radius are in the local space of the soccer ball model.
             // The soccer ball is drawn with: model = Matrix_Translate(5.0f, 1.0f, 0.0f) * Matrix_Scale(2.0f, 2.0f, 2.0f);
-glm::mat4 model_soccer_transform = Matrix_Translate(obstacle_pos.x, obstacle_pos.y, obstacle_pos.z) * Matrix_Scale(2.0f, 2.0f, 2.0f);
+glm::mat4 model_soccer_transform = Matrix_Translate(obstacle_pos.x, obstacle_pos.y - 3, obstacle_pos.z) * Matrix_Scale(3.0f, 3.0f, .0f);
             glm::vec3 sphere_world_center = glm::vec3(model_soccer_transform * glm::vec4(col.pos, 1.0f));
             float soccer_ball_scale_factor = 2.0f; // Assuming uniform scale for radius calculation
             float sphere_world_radius = col.radius * soccer_ball_scale_factor;
@@ -499,8 +465,17 @@ glm::mat4 model_soccer_transform = Matrix_Translate(obstacle_pos.x, obstacle_pos
             // If the bunny had a uniform scale 's_b', this would be sphere_world_radius / s_b.
             float sphere_radius_for_collision_in_bunny_local = sphere_world_radius;
 
-            if (SphereBoxCollision(sphere_center_in_bunny_local, sphere_radius_for_collision_in_bunny_local, bunny_limits)) {
-                printf("colidiu com a bola\n");
+            glm::vec4 intersection_point = glm::vec4(0.0, 0.0, 0.0, 1.0);
+            if (SphereBoxCollision(sphere_center_in_bunny_local, sphere_radius_for_collision_in_bunny_local, bunny_limits, &intersection_point)) {
+                
+                
+                // Movimenta o coelho junto com a bola
+                (g_BunnyPosition).y = intersection_point.y;// - bunny_limits.bbox_min.y;
+                if (jump_velocity <= 0.0f) {
+                    jumping = false;
+                    jump_velocity = 0.0f;
+                    on_top = true;
+                }
             }
         }
 
@@ -559,15 +534,24 @@ glm::mat4 model_soccer_transform = Matrix_Translate(obstacle_pos.x, obstacle_pos
         glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
         
+        // Chão
+        
+        ComputeObject("../../data/plane.obj", &g_VirtualScene);
+        model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(50.0f, 50.0f, 50.0f);
+        
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PLANE);
+        DrawVirtualObject("plane");
+        
         //NOVO
         // Esfera ceu
         glDepthMask(GL_FALSE); // Desabilita escrita de profundidade
         glCullFace(GL_FRONT);   // Oculta a frente dos vértices
 
-        // Usa o modelo de esfera pronto pra calcular o céu, acho que vamos mudar
+        // Usa o modelo de esfera pra calcular o céu
         // Movimenta ele junto com a camera
         model = Matrix_Translate(camera_position_c.x, camera_position_c.y, camera_position_c.z)
-                                   * Matrix_Scale(1.0f, 1.0f, 1.0f); // Adjust scale as needed
+                                   * Matrix_Scale(20.0f, 20.0f, 20.0f); // Ajustar conforme necessário
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, SKY_SPHERE);
         DrawVirtualObject("sky"); 
@@ -575,7 +559,7 @@ glm::mat4 model_soccer_transform = Matrix_Translate(obstacle_pos.x, obstacle_pos
         glCullFace(GL_BACK);
         glDepthMask(GL_TRUE); // Faz voltar os parâmetros originais
 
-        glm::mat4 model_obstacle = Matrix_Translate(obstacle_pos.x, obstacle_pos.y, obstacle_pos.z) * Matrix_Scale(2.0f, 2.0f, 2.0f);
+        glm::mat4 model_obstacle = Matrix_Translate(obstacle_pos.x, obstacle_pos.y - 3, obstacle_pos.z) * Matrix_Scale(2.0f, 2.0f, 2.0f);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model_obstacle));
         glUniform1i(g_object_id_uniform, SOCCER_BALL); 
         DrawVirtualObject("soccer_ball"); 
@@ -787,6 +771,8 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage2"), 2);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage3"), 3);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage4"), 4);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage5"), 5);
+
     glUseProgram(0);
 }
 

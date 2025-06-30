@@ -22,6 +22,7 @@ uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
 uniform sampler2D TextureImage3;
 uniform sampler2D TextureImage4;
+uniform sampler2D TextureImage5;
 
 
 // Identificador que define qual objeto está sendo desenhado no momento
@@ -158,21 +159,24 @@ void main()
     float V = 0.0;
     vec3 tex_obj;
 
-    if (object_id == BUNNY  || object_id == SOCCER_BALL) {
+    if (object_id == BUNNY  || object_id == SOCCER_BALL || object_id == PLANE) {
         U = texcoords.x;
         V = texcoords.y;
         if(object_id == BUNNY){
             tex_obj = texture(TextureImage0, vec2(U,V)).rgb;
         } else if(object_id == SOCCER_BALL){
             tex_obj = texture(TextureImage4, vec2(U,V)).rgb;
+        } else if(object_id == PLANE){
+            tex_obj = texture(TextureImage5, vec2(U,V)).rgb;
         }
-    } else if ( object_id == CHAIR ){
+    } else if ( object_id == CHAIR){
         U = texcoords.x;
         V = texcoords.y;
         tex_obj = texture(TextureImage1, vec2(U,V)).rgb;
     } else if (object_id == SKY_SPHERE) {
         float sphere_rho = 1;
-        vec4 p_line = camera_pos + sphere_rho*normalize(position_model - camera_pos);
+        vec4 camera_pos_a = vec4(camera_pos.x, camera_pos.y, camera_pos.z, 1);
+        vec4 p_line = camera_pos_a + sphere_rho*normalize(position_model - camera_pos_a);
         vec4 p_vector = p_line - camera_pos;
 
         float sphere_theta = atan(p_vector[0], p_vector[2]);
@@ -187,7 +191,6 @@ void main()
         V = texcoords.y;
         tex_obj = texture(TextureImage3, vec2(U,V)).rgb;
     }
-
     color.rgb = tex_obj;
 
     // Cor final com correção gamma, considerando monitor sRGB.
