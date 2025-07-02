@@ -99,16 +99,9 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
-// NOVO
 GLuint LoadTextureFromFile(const char* filename);
 void LoadTextureImage(const char* filename);
-//NOVO-BEZIER
 glm::vec3 BezierCubic(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, float t);
-
-// Definimos uma estrutura que armazenará dados necessários para renderizar
-// cada objeto da cena virtual.
-
-// Abaixo definimos variáveis globais utilizadas em várias funções do código.
 
 // A cena virtual é uma lista de objetos nomeados, guardados em um dicionário
 // (map).  Veja dentro da função BuildTrianglesAndAddToVirtualScene() como que são incluídos
@@ -161,7 +154,6 @@ GLint g_model_uniform;
 GLint g_view_uniform;
 GLint g_projection_uniform;
 GLint g_object_id_uniform;
-//NOVO
 GLuint g_NumLoadedTextures = 0;
 GLint g_camera_position_uniform;
 
@@ -169,7 +161,6 @@ bool firstpCamera = false;
 glm::vec3 g_BunnyPosition = glm::vec3(3.0f, -1.0f, 0.0f);
 float g_BunnySpeed = 2.0f;
 
-//NOVO-BEZIER
 glm::vec3 bezier_p0 = glm::vec3(8.0f, 2.8f, 0.0f);   
 glm::vec3 bezier_p1 = glm::vec3(9.5f, 4.5f,  2.0f);   
 glm::vec3 bezier_p2 = glm::vec3(11.0f, 2.0f, -2.0f);  
@@ -251,7 +242,7 @@ int main(int argc, char* argv[])
 
     LoadShadersFromFiles();
 
-    //NOVO
+    // Carregamento das texturas
     LoadTextureImage("../../data/Textures/hare_diffuse.png"); // TextureImage0
     LoadTextureImage("../../data/Textures/leather_chair_BaseColor.png"); // TextureImage1
     LoadTextureImage("../../data/Textures/fundo.jpg"); // TextureImage2
@@ -261,12 +252,17 @@ int main(int argc, char* argv[])
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ComputeObject("../../data/sphere.obj", &g_VirtualScene);
-
-    // Construímos a representação de objetos geométricos através de malhas de triângulos
     ComputeObject("../../data/sky.obj", &g_VirtualScene);
+    ComputeObject("../../data/plane.obj", &g_VirtualScene);
+    
+    ObjModel bunnymodel = ComputeObject("../../data/hare.obj", &g_VirtualScene);
+    ColliderBox bunny_limits = createBoundingBox(bunnymodel.attrib);
+    
+    ObjModel soccer_ball = ComputeObject("../../data/soccer_ball.obj", &g_VirtualScene);
+    ColliderSphere collider_soccer = createBoundingSphereRitter(soccer_ball.attrib);
+    sphere_colliders.push_back(collider_soccer);
 
     ObjModel boxmodel = ComputeObject("../../data/woodenCrate.obj", &g_VirtualScene);
-
     ColliderBox box_limits = createBoundingBox(boxmodel.attrib);
     float base_scale = 0.3f;
     float base_spacing = 1.0f;
@@ -281,16 +277,6 @@ int main(int argc, char* argv[])
         box_colliders.push_back({pos, bbox_min, bbox_max});
     }
 
-    ObjModel bunnymodel = ComputeObject("../../data/hare.obj", &g_VirtualScene);
-    
-    ObjModel soccer_ball = ComputeObject("../../data/soccer_ball.obj", &g_VirtualScene);
-    ColliderSphere collider_soccer = createBoundingSphereRitter(soccer_ball.attrib);
-    sphere_colliders.push_back(collider_soccer);
-
-    ColliderBox bunny_limits = createBoundingBox(bunnymodel.attrib);
-    
-    ComputeObject("../../data/plane.obj", &g_VirtualScene);
-    
     ObjModel chair = ComputeObject("../../data/leather_chair.obj", &g_VirtualScene);
     ColliderBox chair_limits = createBoundingBox(chair.attrib);
     chair_limits.pos = glm::vec3(-2.0f, -1.0f, 0.0f);
@@ -322,12 +308,7 @@ int main(int argc, char* argv[])
     {
         // Aqui executamos as operações de renderização
 
-        // Definimos a cor do "fundo" do framebuffer como branco.  Tal cor é
-        // definida como coeficientes RGBA: Red, Green, Blue, Alpha; isto é:
-        // Vermelho, Verde, Azul, Alpha (valor de transparência).
-        // Conversaremos sobre sistemas de cores nas aulas de Modelos de Iluminação.
-        //
-        //           R     G     B     A
+        // Definimos a cor do "fundo" do framebuffer como branco.
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
         // "Pintamos" todos os pixels do framebuffer com a cor definida acima,
@@ -361,14 +342,15 @@ int main(int argc, char* argv[])
             camera_lookat_l = glm::vec4(g_BunnyPosition, 1.0f);
             camera_view_vector = camera_lookat_l - camera_position_c;
         }
-        //NOVO
+
         glUniform4f(g_camera_position_uniform, camera_position_c.x, camera_position_c.y, camera_position_c.z, camera_position_c.w);
 
+        
+        // Cálculos bezier
         float current_time = (float)glfwGetTime();
         float delta_time = current_time - last_time;
         last_time = current_time;
 
-        //NOVO-BEZIER
         bezier_time += bezier_speed * delta_time * bezier_direction;
         if (bezier_time > 1.0f) {
             bezier_time = 2.0f - bezier_time; 
@@ -380,11 +362,12 @@ int main(int argc, char* argv[])
         }
         glm::vec3 obstacle_pos = BezierCubic(bezier_p0, bezier_p1, bezier_p2, bezier_p3, bezier_time);
 
+
+        // Cálculos ângulo coelho
         glm::vec3 front_vector = glm::normalize(glm::vec3(camera_view_vector.x, 0.0f, camera_view_vector.z));
         glm::vec3 right_vector = glm::normalize(glm::cross(front_vector, glm::vec3(0.0f, 1.0f, 0.0f)));
         float camera_speed = g_BunnySpeed * delta_time;
-
-        static glm::vec3 previous_bunny_position = g_BunnyPosition;
+        
         glm::vec3 move_direction(0.0f);
 
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
@@ -406,6 +389,7 @@ int main(int argc, char* argv[])
             g_AngleY = target_angle;
         }
 
+        // Cálculo do pulo do coelho
         static bool jumping = false;
         static float jump_velocity = 0.0f;
         const float gravity = 9.8f;
@@ -422,6 +406,8 @@ int main(int argc, char* argv[])
                 jump_velocity = 0.0f;
             }
         }
+        // Cálculo colisões
+        static glm::vec3 previous_bunny_position = g_BunnyPosition;
         glm::vec3 bunny_min = g_BunnyPosition + bunny_limits.bbox_min;
         glm::vec3 bunny_max = g_BunnyPosition + bunny_limits.bbox_max;
         bool on_top = false; //verifica se o personagem está em cima de um obj
@@ -438,39 +424,30 @@ int main(int argc, char* argv[])
             }
         }
 
-        // Teste bruto da colisao do coelho e da bola de futebol
-        // Criar uma funcao que simplifique
+        // Posicao no mundo da bola de futebol
+        glm::vec3 soccer_ball_pos = glm::vec3(obstacle_pos.x, obstacle_pos.y - 2, obstacle_pos.z);
+
+        // Iterador dos colliders
         for (auto& col : sphere_colliders) {
-            // Converte
-            glm::mat4 model_soccer_transform = Matrix_Translate(obstacle_pos.x, obstacle_pos.y, obstacle_pos.z) * Matrix_Scale(3.0f, 3.0f, .0f);
-            glm::vec3 sphere_world_center = glm::vec3(model_soccer_transform * glm::vec4(col.pos, 1.0f));
-            float soccer_ball_scale_factor = 2.0f; // Assuming uniform scale for radius calculation
-            float sphere_world_radius = col.radius * soccer_ball_scale_factor;
+            // Colisor no espaco do mundo
+            glm::vec3 sphere_world_center = soccer_ball_pos + col.pos;
 
-            // Bunny's model transformation
-            // The bunny_limits variable holds the AABB in the bunny's local space.
-            glm::mat4 bunny_model_transform = Matrix_Translate(g_BunnyPosition.x, g_BunnyPosition.y, g_BunnyPosition.z)
-                                          * Matrix_Rotate_Z(g_AngleZ)
-                                          * Matrix_Rotate_Y(g_AngleY)
-                                          * Matrix_Rotate_X(g_AngleX);
-            glm::mat4 bunny_model_transform_inv = glm::inverse(bunny_model_transform);
-
-            // Transform sphere's world center into bunny's local space
-            glm::vec3 sphere_center_in_bunny_local = glm::vec3(bunny_model_transform_inv * glm::vec4(sphere_world_center, 1.0f));
+            glm::vec3 sphere_center_in_bunny_local = sphere_world_center - g_BunnyPosition;
             
-            // Sphere's radius in bunny's local space.
-            // Since the bunny is not scaled in its model matrix, the world radius can be used.
-            // If the bunny had a uniform scale 's_b', this would be sphere_world_radius / s_b.
-            float sphere_radius_for_collision_in_bunny_local = sphere_world_radius;
+            glm::vec3 intersection_point; 
 
-            glm::vec3 intersection_point = glm::vec3(0.0, 0.0, 0.0);
-            if (SphereBoxCollision(sphere_center_in_bunny_local, sphere_radius_for_collision_in_bunny_local, bunny_limits, &intersection_point)) {
-                // Movimenta o coelho junto com a bola
-                g_BunnyPosition.y = intersection_point.y + g_BunnyPosition.y - bunny_limits.bbox_min.y;
-                if (jump_velocity <= 0.0f) {
-                    jumping = false;
+            if (SphereBoxCollision(sphere_center_in_bunny_local, col.radius, bunny_limits, &intersection_point)) {
+                // Se está abaixo da bola
+                if(sphere_center_in_bunny_local.y > 1.0f){
                     jump_velocity = 0.0f;
-                    on_top = true;
+                    g_BunnyPosition = Matrix_Translate(0.0f, -0.07f, 0.0f) * glm::vec4(g_BunnyPosition, 1.0f);
+                } else {
+                    g_BunnyPosition.y = (g_BunnyPosition.y + intersection_point.y) - bunny_limits.bbox_min.y;
+                    if (jump_velocity <= 0.0f) {
+                        jumping = false;
+                        jump_velocity = 0.0f;
+                        on_top = true;
+                    }
                 }
             }
         }
@@ -489,11 +466,8 @@ int main(int argc, char* argv[])
         //atualiza posicao
         previous_bunny_position = g_BunnyPosition;
 
-        // Computamos a matriz "View" utilizando os parâmetros da câmera para
-        // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
+        // Projeção
         glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
-
-        // Agora computamos a matriz de Projeção.
         glm::mat4 projection;
 
         // Note que, no sistema de coordenadas da câmera, os planos near e far
@@ -531,15 +505,11 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
         
         // Chão
-        
-        ComputeObject("../../data/plane.obj", &g_VirtualScene);
         model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(50.0f, 50.0f, 50.0f);
-        
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("plane");
         
-        //NOVO
         // Esfera ceu
         glDepthMask(GL_FALSE); // Desabilita escrita de profundidade
         glCullFace(GL_FRONT);   // Oculta a frente dos vértices
@@ -555,12 +525,13 @@ int main(int argc, char* argv[])
         glCullFace(GL_BACK);
         glDepthMask(GL_TRUE); // Faz voltar os parâmetros originais
 
-        glm::mat4 model_obstacle = Matrix_Translate(obstacle_pos.x, obstacle_pos.y, obstacle_pos.z) * Matrix_Scale(2.0f, 2.0f, 2.0f);
+        // Bola de futebol
+        glm::mat4 model_obstacle = Matrix_Translate(soccer_ball_pos.x, soccer_ball_pos.y, soccer_ball_pos.z) * Matrix_Scale(2.0f, 2.0f, 2.0f);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model_obstacle));
         glUniform1i(g_object_id_uniform, SOCCER_BALL); 
         DrawVirtualObject("soccer_ball"); 
 
-        // Desenhamos o modelo do coelho
+        // Coelho
         model = Matrix_Translate(g_BunnyPosition.x, g_BunnyPosition.y, g_BunnyPosition.z)
               * Matrix_Rotate_Z(g_AngleZ)
               * Matrix_Rotate_Y(g_AngleY)
@@ -595,12 +566,7 @@ int main(int argc, char* argv[])
         }
         PopMatrix(model2);
 
-        // Desenhamos o modelo do plano
-        // model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
-        // glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        // glUniform1i(g_object_id_uniform, PLANE);
-        // DrawVirtualObject("the_plane");
-
+        // Cadeira
         model = Matrix_Translate(-2.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, CHAIR);
@@ -639,7 +605,6 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-    // NOVO
 // Função que carrega uma imagem para ser utilizada como textura
 void LoadTextureImage(const char* filename)
 {

@@ -22,8 +22,8 @@ bool SphereCollision(glm::vec3& center1, float radius1, glm::vec3& center2, floa
     return distance <= sumRadius;
 }
 
-bool SphereBoxCollision(const glm::vec3& center, float radius, ColliderBox box, glm::vec3* intersection_point){
-    // Encontra o ponto da caixa mais próximo do centro da esfera
+bool SphereBoxCollision(glm::vec3& center, float radius, ColliderBox box, glm::vec3* intersection_point){
+     // Encontra o ponto da caixa mais próximo do centro da esfera
     float closest_x = glm::clamp(center.x, box.bbox_min.x, box.bbox_max.x);
     float closest_y = glm::clamp(center.y, box.bbox_min.y, box.bbox_max.y);
     float closest_z = glm::clamp(center.z, box.bbox_min.z, box.bbox_max.z);
