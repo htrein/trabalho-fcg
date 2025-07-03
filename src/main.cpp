@@ -54,6 +54,7 @@
 #define SKY_SPHERE 4
 #define BOX 5
 #define SOCCER_BALL 6
+#define CARROT 7
 
 std::vector<ColliderBox> box_colliders; //vetor de objetos colidíveis
 std::vector<ColliderSphere> sphere_colliders;
@@ -249,12 +250,15 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/Textures/Wooden Crate_Crate_BaseColor.png"); // TextureImage3
     LoadTextureImage("../../data/Textures/Football_Diffuse.jpg"); // TextureImage4
     LoadTextureImage("../../data/Textures/plane.jpg"); // TextureImage5
+    LoadTextureImage("../../data/Textures/Carrot_v01.jpg"); //TextureImage6
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ComputeObject("../../data/sphere.obj", &g_VirtualScene);
     ComputeObject("../../data/sky.obj", &g_VirtualScene);
     ComputeObject("../../data/plane.obj", &g_VirtualScene);
     
+    ObjModel carrotmodel = ComputeObject("../../data/carrot.obj", &g_VirtualScene);
+
     ObjModel bunnymodel = ComputeObject("../../data/hare.obj", &g_VirtualScene);
     ColliderBox bunny_limits = createBoundingBox(bunnymodel.attrib);
     
@@ -562,6 +566,14 @@ int main(int argc, char* argv[])
             glUniform1i(g_object_id_uniform, BOX);
             DrawVirtualObject("Crate_Plane.005");
 
+            glm::mat4 carrot_model = model2 
+            * Matrix_Translate(0.0f, 7.0f, 0.0f)     
+            * Matrix_Scale(0.02f, 0.02f, 0.02f)      
+            * Matrix_Rotate_X(-3.141592/2.0f);       
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(carrot_model));
+            glUniform1i(g_object_id_uniform, CARROT);
+            DrawVirtualObject("10170_Carrot_v01");      
+
             PopMatrix(model2);
         }
         PopMatrix(model2);
@@ -733,7 +745,7 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage3"), 3);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage4"), 4);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage5"), 5);
-
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage6"), 6);
     glUseProgram(0);
 }
 

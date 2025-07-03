@@ -23,7 +23,7 @@ uniform sampler2D TextureImage2;
 uniform sampler2D TextureImage3;
 uniform sampler2D TextureImage4;
 uniform sampler2D TextureImage5;
-
+uniform sampler2D TextureImage6;
 
 // Identificador que define qual objeto está sendo desenhado no momento
 #define SPHERE 0
@@ -34,6 +34,7 @@ uniform sampler2D TextureImage5;
 #define SKY_SPHERE 4
 #define BOX 5
 #define SOCCER_BALL 6
+#define CARROT 7
 
 uniform int object_id;
 
@@ -190,6 +191,10 @@ void main()
         U = texcoords.x;
         V = texcoords.y;
         tex_obj = texture(TextureImage3, vec2(U,V)).rgb;
+    } else if (object_id == CARROT) {
+        U = texcoords.x;
+        V = texcoords.y;
+        tex_obj = texture(TextureImage6, vec2(U,V)).rgb;
     }
     color.rgb = tex_obj;
 
