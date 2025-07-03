@@ -40,6 +40,16 @@ bool SphereBoxCollision(glm::vec3& center, float radius, ColliderBox box, glm::v
     return distance_squared < (radius * radius);
 }
 
+bool BoxBoxCollision(ColliderBox box1, ColliderBox box2, glm::mat4 col1_transform, glm::mat4 col2_transform){
+    std::vector<glm::vec4> box1_corners = cornersOfBox(box1);
+    std::vector<glm::vec4> box2_corners = cornersOfBox(box2);
+
+    
+    b1_bbox_max_in2 = col2_transform * glm::inverse(col1_transform) * glm::vec4(box1.bbox_max, 1.0f);
+    b1_bbox_min_in2 = col2_transform * glm::inverse(col1_transform) * glm::vec4(box1.bbox_min, 1.0f);
+
+}
+
 void collisionTreatmentAABB(glm::vec3* g_BunnyPosition, ColliderBox bunny_limits, glm::vec3 obj_min, glm::vec3 obj_max, glm::vec3 previous_bunny_position, float folga, bool* jumping, bool* on_top, float* jump_velocity){
     glm::vec3 bunny_min = *g_BunnyPosition + bunny_limits.bbox_min;
     glm::vec3 bunny_max = *g_BunnyPosition + bunny_limits.bbox_max;
@@ -77,4 +87,46 @@ void collisionTreatmentAABB(glm::vec3* g_BunnyPosition, ColliderBox bunny_limits
             *g_BunnyPosition = previous_bunny_position;
         }
     }
+}
+
+std::vector<glm::vec4> cornersOfBox(ColliderBox box){
+    std::vector<glm::vec4> vertices;
+    vertices.reserve(8);
+    vertices.push_back(glm::vec4(box.bbox_min.x, box.bbox_min.y, box.bbox_min.z, 1.0f));
+    vertices.push_back(glm::vec4(box.bbox_max.x, box.bbox_min.y, box.bbox_min.z, 1.0f));
+    vertices.push_back(glm::vec4(box.bbox_min.x, box.bbox_max.y, box.bbox_min.z, 1.0f));
+    vertices.push_back(glm::vec4(box.bbox_min.x, box.bbox_min.y, box.bbox_max.z, 1.0f));
+    vertices.push_back(glm::vec4(box.bbox_max.x, box.bbox_max.y, box.bbox_min.z, 1.0f));
+    vertices.push_back(glm::vec4(box.bbox_max.x, box.bbox_min.y, box.bbox_max.z, 1.0f));
+    vertices.push_back(glm::vec4(box.bbox_min.x, box.bbox_max.y, box.bbox_max.z, 1.0f));
+    vertices.push_back(glm::vec4(box.bbox_max.x, box.bbox_max.y, box.bbox_max.z, 1.0f));
+    return vertices;
+}
+
+std::pair<float, float> projectionLimits(const std::vector<glm::vec4>& vertices, glm::vec4 axis){
+    float min = std::numeric_limits<float>::max();
+    float max = std::numeric_limits<float>::min();
+    axis = axis / norm(axis);
+
+    for (const auto& vertex : vertices){
+        float projection = glm::dot(vertex, axis);
+
+        if (projection < min) {
+            min = projection;
+        }
+        if (projection > max) {
+            max = projection;
+        }
+    }
+    return std::pair(min, max);
+}
+
+bool overlapHappend(std::pair<float, float> limits1, std::pair<float, float> limits2){
+    if(limits1.first <= limits2.first && limits1.second >= limits2.first){
+        return true;
+    }
+    if(limits2.first <= limits1.first && limits2.second >= limits1.first){
+        return true;
+    }
+    return false;
 }
