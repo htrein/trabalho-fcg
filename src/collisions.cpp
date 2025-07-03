@@ -43,10 +43,8 @@ bool SphereBoxCollision(glm::vec3& center, float radius, ColliderBox box, glm::v
 bool BoxBoxCollision(ColliderBox box1, ColliderBox box2, glm::mat4 col1_transform, glm::mat4 col2_transform){
     std::vector<glm::vec4> box1_corners = cornersOfBox(box1);
     std::vector<glm::vec4> box2_corners = cornersOfBox(box2);
-
-    
-    b1_bbox_max_in2 = col2_transform * glm::inverse(col1_transform) * glm::vec4(box1.bbox_max, 1.0f);
-    b1_bbox_min_in2 = col2_transform * glm::inverse(col1_transform) * glm::vec4(box1.bbox_min, 1.0f);
+    // b1_bbox_max_in2 = col2_transform * glm::inverse(col1_transform) * glm::vec4(box1.bbox_max, 1.0f);
+    // b1_bbox_min_in2 = col2_transform * glm::inverse(col1_transform) * glm::vec4(box1.bbox_min, 1.0f);
 
 }
 
