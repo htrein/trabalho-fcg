@@ -79,6 +79,8 @@ void main()
     vec3 Ka; // Refletância ambiente
     float q; // Expoente especular para o modelo de iluminação de Phong
 
+    vec4 h = normalize(v + l); //vetor para BLinn-Phong
+
     if ( object_id == SPHERE )
     {
         // PREENCHA AQUI
@@ -92,27 +94,45 @@ void main()
     {
         // PREENCHA AQUI
         // Propriedades espectrais do coelho
-        Kd = vec3(0.08,0.4,0.8);
-        Ks = vec3(0.8,0.8,0.8);
-        Ka = Kd * 0.5;
-        q = 32.0;
-    
+        Kd = vec3(1.0, 1.0, 1.0);
+        Ks = vec3(0.3, 0.3, 0.3);
+        Ka = vec3(0.2, 0.2, 0.2);
+        q = 16.0;
+
     }
     else if ( object_id == PLANE )
     {
         // PREENCHA AQUI
         // Propriedades espectrais do plano
-        Kd = vec3(0.2,0.2,0.2);
+        Kd = vec3(1.0, 1.0, 1.0);
         Ks = vec3(0.3,0.3,0.3);
-        Ka = vec3(0.0,0.0,0.0);
+        Ka = vec3(0.2,0.2,0.2);
         q = 20.0;
-    } 
+    }
     else if (object_id == CHAIR){
-        Kd = vec3(0.4, 0.2, 0.1);
+        Kd = vec3(1.0, 1.0, 1.0);
         Ks = vec3(0.3, 0.3, 0.3);
-        Ka = Kd * 0.3;
+        Ka = Kd * 0.2;
         q = 16.0;
-    }                                                                                                                                                                                                                                          
+    }
+    else if (object_id == BOX){
+        Kd = vec3(1.0, 1.0, 1.0);
+        Ks = vec3(0.1, 0.1, 0.1);
+        Ka = Kd * 0.2;
+        q = 8.0;
+    }
+    else if (object_id == SOCCER_BALL){
+        Kd = vec3(1.0, 1.0, 1.0);
+        Ks = vec3(0.5, 0.5, 0.5);
+        Ka = Kd * 0.2;
+        q = 40.0;
+    }
+    else if (object_id == CARROT){
+        Kd = vec3(1.0, 1.0, 1.0);
+        Ks = vec3(0.2, 0.2, 0.2);
+        Ka = Kd * 0.2;
+        q = 16.0;
+    }
     else // Objeto desconhecido = preto
     {
         Kd = vec3(0.0,0.0,0.0);
@@ -125,7 +145,7 @@ void main()
     vec3 I = vec3(1.0,1.0,1.0); // PREENCH AQUI o espectro da fonte de luz
 
     // Espectro da luz ambiente
-    vec3 Ia = vec3(0.,0.2,0.2); // PREENCHA AQUI o espectro da luz ambiente
+    vec3 Ia = vec3(0.2,0.2,0.2); // PREENCHA AQUI o espectro da luz ambiente
 
     // Termo difuso utilizando a lei dos cossenos de Lambert
     vec3 lambert_diffuse_term = Kd * I * max(0.0, dot(normalize(n.xyz), normalize(l.xyz)));// PREENCHA AQUI o termo difuso de Lambert
@@ -134,7 +154,10 @@ void main()
     vec3 ambient_term = Ka * Ia; // PREENCHA AQUI o termo ambiente
 
     // Termo especular utilizando o modelo de iluminação de Phong
-    vec3 phong_specular_term  = Ks * I * pow(max(0.0, dot(normalize(r.xyz), normalize(v.xyz))), q); // PREENCH AQUI o termo especular de Phong
+    vec3 phong_specular_term  = Ks * I * pow(max(0.0, dot(normalize(r.xyz), normalize(v.xyz))), q); // PREENCHA AQUI o termo especular de Phong
+
+    // Termo especular utilizando Blinn-Phong
+    vec3 blinn_phong_specular_term = Ks * I * pow(max(0.0, dot(n.xyz, h.xyz)), q);
 
     // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
     // necessário:
@@ -150,26 +173,16 @@ void main()
     // Alpha default = 1 = 100% opaco = 0% transparente
     color.a = 1;
 
-    // Cor final do fragmento calculada com uma combinação dos termos difuso,
-    // especular, e ambiente. Veja slide 129 do documento Aula_17_e_18_Modelos_de_Iluminacao.pdf.
-    color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
-
     // NOVO
     // Coordenadas de textura U e V
     float U = 0.0;
     float V = 0.0;
     vec3 tex_obj;
 
-    if (object_id == BUNNY  || object_id == SOCCER_BALL || object_id == PLANE) {
+    if (object_id == BUNNY) {
         U = texcoords.x;
         V = texcoords.y;
-        if(object_id == BUNNY){
-            tex_obj = texture(TextureImage0, vec2(U,V)).rgb;
-        } else if(object_id == SOCCER_BALL){
-            tex_obj = texture(TextureImage4, vec2(U,V)).rgb;
-        } else if(object_id == PLANE){
-            tex_obj = texture(TextureImage5, vec2(U,V)).rgb;
-        }
+        tex_obj = texture(TextureImage0, vec2(U,V)).rgb;
     } else if ( object_id == CHAIR){
         U = texcoords.x;
         V = texcoords.y;
@@ -185,20 +198,42 @@ void main()
 
         U = (sphere_theta + M_PI) / (2*M_PI);
         V = (sphere_psi + M_PI_2)/ M_PI;
-        
+
         tex_obj = texture(TextureImage2, vec2(U,V)).rgb;
     } else if (object_id == BOX) {
         U = texcoords.x;
         V = texcoords.y;
         tex_obj = texture(TextureImage3, vec2(U,V)).rgb;
+    } else if (object_id == SOCCER_BALL) {
+        U = texcoords.x;
+        V = texcoords.y;
+        tex_obj = texture(TextureImage4, vec2(U,V)).rgb;
+    } else if(object_id == PLANE){
+        U = texcoords.x;
+        V = texcoords.y;
+        tex_obj = texture(TextureImage5, vec2(U,V)).rgb;
     } else if (object_id == CARROT) {
         U = texcoords.x;
         V = texcoords.y;
         tex_obj = texture(TextureImage6, vec2(U,V)).rgb;
     }
-    color.rgb = tex_obj;
+
+    if (object_id == SKY_SPHERE)
+    {
+        color.rgb = tex_obj;
+    }
+    else if (object_id == SPHERE)
+    {
+        color.rgb = ambient_term + lambert_diffuse_term + blinn_phong_specular_term;
+    }
+    else
+    {
+        vec3 textured_ambient = tex_obj * ambient_term;
+        vec3 textured_diffuse = tex_obj * lambert_diffuse_term;
+        color.rgb = textured_ambient + textured_diffuse + blinn_phong_specular_term;
+    }
 
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
     color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
-} 
+}
