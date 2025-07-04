@@ -260,7 +260,7 @@ int main(int argc, char* argv[])
     ObjModel carrotmodel = ComputeObject("../../data/carrot.obj", &g_VirtualScene);
 
     ObjModel bunnymodel = ComputeObject("../../data/hare.obj", &g_VirtualScene);
-    ColliderBox bunny_limits = createBoundingBox(bunnymodel.attrib);
+    ColliderBox bunny_collider = createBoundingBox(bunnymodel.attrib);
     
     ObjModel soccer_ball = ComputeObject("../../data/soccer_ball.obj", &g_VirtualScene);
     ColliderSphere collider_soccer = createBoundingSphereRitter(soccer_ball.attrib);
@@ -286,7 +286,7 @@ int main(int argc, char* argv[])
     chair_limits.pos = glm::vec3(-2.0f, -1.0f, 0.0f);
     chair_limits.bbox_min *= glm::vec3(2.0f, 1.0f, 2.0f);
     chair_limits.bbox_max *= glm::vec3(2.0f, 1.0f, 2.0f);
-    box_colliders.push_back(chair_limits);
+    //box_colliders.push_back(chair_limits);
     
     if ( argc > 1 )
     {
@@ -365,7 +365,9 @@ int main(int argc, char* argv[])
             bezier_direction = 1;
         }
         glm::vec3 obstacle_pos = BezierCubic(bezier_p0, bezier_p1, bezier_p2, bezier_p3, bezier_time);
-
+        
+        // Posicao no mundo da bola de futebol
+        glm::vec3 soccer_ball_pos = glm::vec3(obstacle_pos.x, obstacle_pos.y, obstacle_pos.z);
 
         // Cálculos ângulo coelho
         glm::vec3 front_vector = glm::normalize(glm::vec3(camera_view_vector.x, 0.0f, camera_view_vector.z));
@@ -410,64 +412,6 @@ int main(int argc, char* argv[])
                 jump_velocity = 0.0f;
             }
         }
-        // Cálculo colisões
-        static glm::vec3 previous_bunny_position = g_BunnyPosition;
-        glm::vec3 bunny_min = g_BunnyPosition + bunny_limits.bbox_min;
-        glm::vec3 bunny_max = g_BunnyPosition + bunny_limits.bbox_max;
-        bool on_top = false; //verifica se o personagem está em cima de um obj
-        const float folga = 0.01f; //folga para evitar jittering
-        //para cada objeto colidivel testa se há colisao
-        for (const auto& col : box_colliders) {
-            glm::vec3 obj_min = col.pos + col.bbox_min;
-            glm::vec3 obj_max = col.pos + col.bbox_max;
-            if (AABBCollision(bunny_min, bunny_max, obj_min, obj_max)) {
-
-                // Se o coelho estava acima do objeto, mas seu limite inferior já estava dentro
-                collisionTreatmentAABB(&g_BunnyPosition, bunny_limits, obj_min, obj_max, previous_bunny_position, folga, &jumping, &on_top, &jump_velocity);
-            }
-        }
-
-        // Posicao no mundo da bola de futebol
-        glm::vec3 soccer_ball_pos = glm::vec3(obstacle_pos.x, obstacle_pos.y, obstacle_pos.z);
-
-        // Iterador dos colliders
-        for (auto& col : sphere_colliders) {
-            // Colisor no espaco do mundo
-            glm::vec3 sphere_world_center = soccer_ball_pos + col.pos;
-
-            glm::vec3 sphere_center_in_bunny_local = sphere_world_center - g_BunnyPosition;
-            
-            glm::vec3 intersection_point; 
-
-            if (SphereBoxCollision(sphere_center_in_bunny_local, col.radius, bunny_limits, &intersection_point)) {
-                // Se está abaixo da bola
-                if(sphere_center_in_bunny_local.y > 1.0f){
-                    jump_velocity = 0.0f;
-                    g_BunnyPosition = Matrix_Translate(0.0f, -0.07f, 0.0f) * glm::vec4(g_BunnyPosition, 1.0f);
-                } else {
-                    g_BunnyPosition.y = (g_BunnyPosition.y + intersection_point.y) - bunny_limits.bbox_min.y;
-                    if (jump_velocity <= 0.0f) {
-                        jumping = false;
-                        jump_velocity = 0.0f;
-                        on_top = true;
-                    }
-                }
-            }
-        }
-
-        //queda
-        if (!on_top && g_BunnyPosition.y > 0.0f && !jumping) {
-            jumping = true;
-            jump_velocity = 0.0f;
-        }
-        //permite pulo se está no chao ou se esta em cima de outro objeto
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !jumping && (g_BunnyPosition.y <= 0.0f || on_top))
-        {
-            jumping = true;
-            jump_velocity = jump_strength;
-        }
-        //atualiza posicao
-        previous_bunny_position = g_BunnyPosition;
 
         // Projeção
         glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
@@ -535,10 +479,11 @@ int main(int argc, char* argv[])
         DrawVirtualObject("soccer_ball"); 
 
         // Coelho
-        model = Matrix_Translate(g_BunnyPosition.x, g_BunnyPosition.y, g_BunnyPosition.z)
+        glm::mat4 transform_bunny = Matrix_Translate(g_BunnyPosition.x, g_BunnyPosition.y, g_BunnyPosition.z)
               * Matrix_Rotate_Z(g_AngleZ)
               * Matrix_Rotate_Y(g_AngleY)
               * Matrix_Rotate_X(g_AngleX);
+        model = transform_bunny;
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
         DrawVirtualObject("hare");
@@ -578,10 +523,73 @@ int main(int argc, char* argv[])
         PopMatrix(model2);
 
         // Cadeira
-        model = Matrix_Translate(-2.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
+        glm::mat4 transform_chair = Matrix_Translate(-2.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
+        model = transform_chair;
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, CHAIR);
         DrawVirtualObject("leather_chair");
+        
+        // Cálculo colisões
+        static glm::vec3 previous_bunny_position = g_BunnyPosition;
+        glm::vec3 bunny_min = g_BunnyPosition + bunny_collider.bbox_min;
+        glm::vec3 bunny_max = g_BunnyPosition + bunny_collider.bbox_max;
+        bool on_top = false; //verifica se o personagem está em cima de um obj
+        const float folga = 0.01f; //folga para evitar jittering
+        //para cada objeto colidivel testa se há colisao
+        for (const auto& col : box_colliders) {
+            glm::vec3 obj_min = col.pos + col.bbox_min;
+            glm::vec3 obj_max = col.pos + col.bbox_max;
+            if (AABBCollision(bunny_min, bunny_max, obj_min, obj_max)) {
+                // Se o coelho estava acima do objeto, mas seu limite inferior já estava dentro
+                collisionTreatmentAABB(&g_BunnyPosition, bunny_collider, obj_min, obj_max, previous_bunny_position, folga, &jumping, &on_top, &jump_velocity);
+            }
+        }
+
+        if(BoxBoxCollision(bunny_collider, chair_limits, transform_bunny, transform_chair)){
+            printf("colidiu\n");
+
+        }
+
+        // Iterador dos colliders
+        for (auto& col : sphere_colliders) {
+            // Colisor no espaco do mundo
+            glm::vec3 sphere_world_center = soccer_ball_pos + col.pos;
+
+            glm::vec3 sphere_center_in_bunny_local = sphere_world_center - g_BunnyPosition;
+            
+            glm::vec3 intersection_point; 
+
+            if (SphereBoxCollision(sphere_center_in_bunny_local, col.radius, bunny_collider, &intersection_point)) {
+                // Se está abaixo da bola
+                if(sphere_center_in_bunny_local.y > 1.0f){
+                    jump_velocity = 0.0f;
+                    g_BunnyPosition = Matrix_Translate(0.0f, -0.07f, 0.0f) * glm::vec4(g_BunnyPosition, 1.0f);
+                } else {
+                    g_BunnyPosition.y = (g_BunnyPosition.y + intersection_point.y) - bunny_collider.bbox_min.y;
+                    if (jump_velocity <= 0.0f) {
+                        jumping = false;
+                        jump_velocity = 0.0f;
+                        on_top = true;
+                    }
+                }
+            }
+        }
+
+        //queda
+        if (!on_top && g_BunnyPosition.y > 0.0f && !jumping) {
+            jumping = true;
+            jump_velocity = 0.0f;
+        }
+        //permite pulo se está no chao ou se esta em cima de outro objeto
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !jumping && (g_BunnyPosition.y <= 0.0f || on_top))
+        {
+            jumping = true;
+            jump_velocity = jump_strength;
+        }
+        //atualiza posicao
+        previous_bunny_position = g_BunnyPosition;
+
+        
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.

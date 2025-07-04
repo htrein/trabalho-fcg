@@ -13,5 +13,6 @@ void collisionTreatmentAABB(glm::vec3* g_BunnyPosition, ColliderBox bunny_limits
 std::vector<glm::vec4> cornersOfBox(ColliderBox box);
 std::pair<float, float> projectionLimits(const std::vector<glm::vec4>& vertices, glm::vec4 axis);
 bool overlapHappend(std::pair<float, float> limits1, std::pair<float, float> limits2);
-std::vector<glm::vec4> getBoxNormals(ColliderBox box, std::vector<glm::vec4> box_corners);
+std::vector<glm::vec4> getBoxNormals();
+bool BoxBoxCollision(ColliderBox box1, ColliderBox box2, glm::mat4 col1_transform, glm::mat4 col2_transform);
 #endif

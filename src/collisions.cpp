@@ -43,39 +43,39 @@ bool SphereBoxCollision(glm::vec3& center, float radius, ColliderBox box, glm::v
 bool BoxBoxCollision(ColliderBox box1, ColliderBox box2, glm::mat4 col1_transform, glm::mat4 col2_transform){
     std::vector<glm::vec4> box_corners1 = cornersOfBox(box1);
     std::vector<glm::vec4> box_corners2 = cornersOfBox(box2);
-    std::vector<glm::vec4> normalsBox1 = getBoxNormals(box1, box_corners1);
-    std::vector<glm::vec4> normalsBox2 = getBoxNormals(box2, box_corners2);
+    std::vector<glm::vec4> localNormals = getBoxNormals();
+    
+    glm::mat3 normalMatrix1 = glm::transpose(glm::inverse(glm::mat3(col1_transform)));
+    glm::mat3 normalMatrix2 = glm::transpose(glm::inverse(glm::mat3(col2_transform)));
+
 
     // Convertendo tudo para as coordenadas do mundo
     for(long unsigned int i = 0; i < box_corners1.size(); i++){
-        box_corners1[i] = glm::inverse(col1_transform) * box_corners1[i];
+        box_corners1[i] = col1_transform * box_corners1[i];
     }
 
     for(long unsigned int i = 0; i < box_corners2.size(); i++){
-        box_corners2[i] = glm::inverse(col2_transform) * box_corners2[i];
+        box_corners2[i] = col2_transform * box_corners2[i];
     }
 
-    for(long unsigned int i = 0; i < normalsBox1.size(); i++){
-        normalsBox1[i] = glm::inverse(col1_transform) * normalsBox1[i];
-    }
-
-    for(long unsigned int i = 0; i < normalsBox2.size(); i++){
-        normalsBox2[i] = glm::inverse(col2_transform) * normalsBox2[i];
-    }
+    std::vector<glm::vec4> world_normals1, world_normals2;
+    for(long unsigned int i = 0; i < localNormals.size(); i++){
+        world_normals1.push_back(glm::vec4(normalMatrix1 * glm::vec3(i), 0.0f));
+        world_normals2.push_back(glm::vec4(normalMatrix2 * glm::vec3(i), 0.0f));
+    } 
     
-    // 3 normais da caixa 1
+    // 3 normais das caixas
     for(int i = 0; i < 3; i++){
-        std::pair<float, float> limits1 = projectionLimits(box_corners1, normalsBox1[i]);
-        std::pair<float, float> limits2 = projectionLimits(box_corners2, normalsBox1[i]);
+        // Caixa 1
+        std::pair<float, float> limits1 = projectionLimits(box_corners1, world_normals1[i]);
+        std::pair<float, float> limits2 = projectionLimits(box_corners2, world_normals1[i]);
         if(!overlapHappend(limits1, limits2)){
             return false;
         }
-    }
 
-    // 3 normais da caixa 2
-    for(int i = 0; i < 3; i++){
-        std::pair<float, float> limits1 = projectionLimits(box_corners1, normalsBox2[i]);
-        std::pair<float, float> limits2 = projectionLimits(box_corners2, normalsBox2[i]);
+        // Caixa 2
+        limits1 = projectionLimits(box_corners1, world_normals2[i]);
+        limits2 = projectionLimits(box_corners2, world_normals2[i]);
         if(!overlapHappend(limits1, limits2)){
             return false;
         }
@@ -85,7 +85,7 @@ bool BoxBoxCollision(ColliderBox box1, ColliderBox box2, glm::mat4 col1_transfor
 
     for(int i = 0; i < 3; i++){
         for(int j = 0; j < 3; j++){
-            glm::vec4 normal = crossproduct(normalsBox1[i], normalsBox2[j]);
+            glm::vec4 normal = crossproduct(world_normals1[i], world_normals2[j]);
             std::pair<float, float> limits1 = projectionLimits(box_corners1, normal);
             std::pair<float, float> limits2 = projectionLimits(box_corners2, normal);
             if(!overlapHappend(limits1, limits2)){
@@ -94,45 +94,6 @@ bool BoxBoxCollision(ColliderBox box1, ColliderBox box2, glm::mat4 col1_transfor
         }   
     }
     return true;
-}
-
-void collisionTreatmentAABB(glm::vec3* g_BunnyPosition, ColliderBox bunny_limits, glm::vec3 obj_min, glm::vec3 obj_max, glm::vec3 previous_bunny_position, float folga, bool* jumping, bool* on_top, float* jump_velocity){
-    glm::vec3 bunny_min = *g_BunnyPosition + bunny_limits.bbox_min;
-    glm::vec3 bunny_max = *g_BunnyPosition + bunny_limits.bbox_max;
-    
-    if (AABBCollision(bunny_min, bunny_max, obj_min, obj_max)) {
-
-        // Se o coelho estava acima do objeto, mas seu limite inferior já estava dentro
-        if (previous_bunny_position.y >= obj_max.y - folga && bunny_min.y < obj_max.y + folga) {
-            //y
-            (*g_BunnyPosition).y = obj_max.y - bunny_limits.bbox_min.y;
-            if (*jump_velocity <= 0.0f) {
-                *jumping = false;
-                *jump_velocity = 0.0f;
-                *on_top = true;
-            }
-        } else {
-            //x
-            glm::vec3 try_pos = *g_BunnyPosition;
-            try_pos.x = previous_bunny_position.x;
-            glm::vec3 try_min = try_pos + bunny_limits.bbox_min;
-            glm::vec3 try_max = try_pos + bunny_limits.bbox_max;
-            if (!AABBCollision(try_min, try_max, obj_min, obj_max)) {
-                (*g_BunnyPosition).x = previous_bunny_position.x;
-                return;
-            }
-            //z
-            try_pos = *g_BunnyPosition;
-            try_pos.z = previous_bunny_position.z;
-            try_min = try_pos + bunny_limits.bbox_min;
-            try_max = try_pos + bunny_limits.bbox_max;
-            if (!AABBCollision(try_min, try_max, obj_min, obj_max)) {
-                (*g_BunnyPosition).z = previous_bunny_position.z;
-                return;
-            }
-            *g_BunnyPosition = previous_bunny_position;
-        }
-    }
 }
 
 std::vector<glm::vec4> cornersOfBox(ColliderBox box){
@@ -178,20 +139,50 @@ bool overlapHappend(std::pair<float, float> limits1, std::pair<float, float> lim
     return false;
 }
 
-std::vector<glm::vec4> getBoxNormals(ColliderBox box, std::vector<glm::vec4> box_corners){
+std::vector<glm::vec4> getBoxNormals() {
     std::vector<glm::vec4> normals;
     normals.reserve(3);
-    glm::vec4 origin = box_corners[0];
-    glm::vec4 vec2 = box_corners[1] - origin;
-    glm::vec4 vec3 = box_corners[2] - origin;
-    glm::vec4 vec4 = box_corners[3] - origin;
-    glm::vec4 vec5 = box_corners[4] - origin;
-    normals.push_back(crossproduct(vec2, vec3));
-    normals.push_back(crossproduct(vec2, vec4));
-    normals.push_back(crossproduct(vec2, vec5));
-
-    for(int i = 0; i < 3; i++){
-        normals[i] = normals[i] / norm(normals[i]);
-    }
+    normals.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)); // Local X-axis
+    normals.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.0f)); // Local Y-axis
+    normals.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.0f)); // Local Z-axis
     return normals;
+}
+
+void collisionTreatmentAABB(glm::vec3* g_BunnyPosition, ColliderBox bunny_limits, glm::vec3 obj_min, glm::vec3 obj_max, glm::vec3 previous_bunny_position, float folga, bool* jumping, bool* on_top, float* jump_velocity){
+    glm::vec3 bunny_min = *g_BunnyPosition + bunny_limits.bbox_min;
+    glm::vec3 bunny_max = *g_BunnyPosition + bunny_limits.bbox_max;
+    
+    if (AABBCollision(bunny_min, bunny_max, obj_min, obj_max)) {
+
+        // Se o coelho estava acima do objeto, mas seu limite inferior já estava dentro
+        if (previous_bunny_position.y >= obj_max.y - folga && bunny_min.y < obj_max.y + folga) {
+            //y
+            (*g_BunnyPosition).y = obj_max.y - bunny_limits.bbox_min.y;
+            if (*jump_velocity <= 0.0f) {
+                *jumping = false;
+                *jump_velocity = 0.0f;
+                *on_top = true;
+            }
+        } else {
+            //x
+            glm::vec3 try_pos = *g_BunnyPosition;
+            try_pos.x = previous_bunny_position.x;
+            glm::vec3 try_min = try_pos + bunny_limits.bbox_min;
+            glm::vec3 try_max = try_pos + bunny_limits.bbox_max;
+            if (!AABBCollision(try_min, try_max, obj_min, obj_max)) {
+                (*g_BunnyPosition).x = previous_bunny_position.x;
+                return;
+            }
+            //z
+            try_pos = *g_BunnyPosition;
+            try_pos.z = previous_bunny_position.z;
+            try_min = try_pos + bunny_limits.bbox_min;
+            try_max = try_pos + bunny_limits.bbox_max;
+            if (!AABBCollision(try_min, try_max, obj_min, obj_max)) {
+                (*g_BunnyPosition).z = previous_bunny_position.z;
+                return;
+            }
+            *g_BunnyPosition = previous_bunny_position;
+        }
+    }
 }
