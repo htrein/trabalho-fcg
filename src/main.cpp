@@ -546,7 +546,7 @@ int main(int argc, char* argv[])
         }
 
         if(BoxBoxCollision(bunny_collider, chair_limits, transform_bunny, transform_chair)){
-            printf("colidiu\n");
+            collisionTreatmentAABB(&g_BunnyPosition, bunny_collider, chair_limits.bbox_min, chair_limits.bbox_max, previous_bunny_position, folga, &jumping, &on_top, &jump_velocity);
 
         }
 
