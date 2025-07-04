@@ -45,6 +45,8 @@
 #include "collisions.hpp"
 #include "object.hpp"
 #include "coliders.hpp"
+#include "boundingBox.hpp"
+
 
 // NOVO
 #define SPHERE 0
@@ -487,6 +489,7 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
         DrawVirtualObject("hare");
+        drawBoundingBox(bunny_collider, transform_bunny, g_model_uniform, g_object_id_uniform); 
 
         glActiveTexture(GL_TEXTURE3);
         glm::mat4 model2 = Matrix_Identity();
@@ -523,11 +526,12 @@ int main(int argc, char* argv[])
         PopMatrix(model2);
 
         // Cadeira
-        glm::mat4 transform_chair = Matrix_Translate(-2.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
+        glm::mat4 transform_chair = Matrix_Translate(-2.0f, -1.0f, 0.0f);// * Matrix_Scale(2.0f, 1.0f, 2.0f);
         model = transform_chair;
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, CHAIR);
         DrawVirtualObject("leather_chair");
+        drawBoundingBox(chair_limits, transform_chair, g_model_uniform, g_object_id_uniform); 
         
         // Cálculo colisões
         static glm::vec3 previous_bunny_position = g_BunnyPosition;
@@ -546,8 +550,8 @@ int main(int argc, char* argv[])
         }
 
         if(BoxBoxCollision(bunny_collider, chair_limits, transform_bunny, transform_chair)){
-            collisionTreatmentAABB(&g_BunnyPosition, bunny_collider, chair_limits.bbox_min, chair_limits.bbox_max, previous_bunny_position, folga, &jumping, &on_top, &jump_velocity);
-
+            //collisionTreatmentAABB(&g_BunnyPosition, bunny_collider, chair_limits.bbox_min, chair_limits.bbox_max, previous_bunny_position, folga, &jumping, &on_top, &jump_velocity);
+            printf("c\n");
         }
 
         // Iterador dos colliders
