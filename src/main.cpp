@@ -420,7 +420,6 @@ int main(int argc, char* argv[])
         for (const auto& col : box_colliders) {
             glm::vec3 obj_min = col.pos + col.bbox_min;
             glm::vec3 obj_max = col.pos + col.bbox_max;
-            printf("x = %f, y = %f, z = %f\n", box_colliders[0].bbox_max.x, box_colliders[0].bbox_min.x, box_colliders[0].pos.x);
             if (AABBCollision(bunny_min, bunny_max, obj_min, obj_max)) {
 
                 // Se o coelho estava acima do objeto, mas seu limite inferior já estava dentro

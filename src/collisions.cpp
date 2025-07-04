@@ -41,11 +41,59 @@ bool SphereBoxCollision(glm::vec3& center, float radius, ColliderBox box, glm::v
 }
 
 bool BoxBoxCollision(ColliderBox box1, ColliderBox box2, glm::mat4 col1_transform, glm::mat4 col2_transform){
-    std::vector<glm::vec4> box1_corners = cornersOfBox(box1);
-    std::vector<glm::vec4> box2_corners = cornersOfBox(box2);
-    // b1_bbox_max_in2 = col2_transform * glm::inverse(col1_transform) * glm::vec4(box1.bbox_max, 1.0f);
-    // b1_bbox_min_in2 = col2_transform * glm::inverse(col1_transform) * glm::vec4(box1.bbox_min, 1.0f);
+    std::vector<glm::vec4> box_corners1 = cornersOfBox(box1);
+    std::vector<glm::vec4> box_corners2 = cornersOfBox(box2);
+    std::vector<glm::vec4> normalsBox1 = getBoxNormals(box1, box_corners1);
+    std::vector<glm::vec4> normalsBox2 = getBoxNormals(box2, box_corners2);
 
+    // Convertendo tudo para as coordenadas do mundo
+    for(long unsigned int i = 0; i < box_corners1.size(); i++){
+        box_corners1[i] = glm::inverse(col1_transform) * box_corners1[i];
+    }
+
+    for(long unsigned int i = 0; i < box_corners2.size(); i++){
+        box_corners2[i] = glm::inverse(col2_transform) * box_corners2[i];
+    }
+
+    for(long unsigned int i = 0; i < normalsBox1.size(); i++){
+        normalsBox1[i] = glm::inverse(col1_transform) * normalsBox1[i];
+    }
+
+    for(long unsigned int i = 0; i < normalsBox2.size(); i++){
+        normalsBox2[i] = glm::inverse(col2_transform) * normalsBox2[i];
+    }
+    
+    // 3 normais da caixa 1
+    for(int i = 0; i < 3; i++){
+        std::pair<float, float> limits1 = projectionLimits(box_corners1, normalsBox1[i]);
+        std::pair<float, float> limits2 = projectionLimits(box_corners2, normalsBox1[i]);
+        if(!overlapHappend(limits1, limits2)){
+            return false;
+        }
+    }
+
+    // 3 normais da caixa 2
+    for(int i = 0; i < 3; i++){
+        std::pair<float, float> limits1 = projectionLimits(box_corners1, normalsBox2[i]);
+        std::pair<float, float> limits2 = projectionLimits(box_corners2, normalsBox2[i]);
+        if(!overlapHappend(limits1, limits2)){
+            return false;
+        }
+    }
+
+    // 9 normais de cross product entre as normais das caixas
+
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; j < 3; j++){
+            glm::vec4 normal = crossproduct(normalsBox1[i], normalsBox2[j]);
+            std::pair<float, float> limits1 = projectionLimits(box_corners1, normal);
+            std::pair<float, float> limits2 = projectionLimits(box_corners2, normal);
+            if(!overlapHappend(limits1, limits2)){
+                return false;
+            }
+        }   
+    }
+    return true;
 }
 
 void collisionTreatmentAABB(glm::vec3* g_BunnyPosition, ColliderBox bunny_limits, glm::vec3 obj_min, glm::vec3 obj_max, glm::vec3 previous_bunny_position, float folga, bool* jumping, bool* on_top, float* jump_velocity){
@@ -116,10 +164,11 @@ std::pair<float, float> projectionLimits(const std::vector<glm::vec4>& vertices,
             max = projection;
         }
     }
-    return std::pair(min, max);
+    return std::pair<float, float>(min, max);
 }
 
 bool overlapHappend(std::pair<float, float> limits1, std::pair<float, float> limits2){
+
     if(limits1.first <= limits2.first && limits1.second >= limits2.first){
         return true;
     }
@@ -127,4 +176,22 @@ bool overlapHappend(std::pair<float, float> limits1, std::pair<float, float> lim
         return true;
     }
     return false;
+}
+
+std::vector<glm::vec4> getBoxNormals(ColliderBox box, std::vector<glm::vec4> box_corners){
+    std::vector<glm::vec4> normals;
+    normals.reserve(3);
+    glm::vec4 origin = box_corners[0];
+    glm::vec4 vec2 = box_corners[1] - origin;
+    glm::vec4 vec3 = box_corners[2] - origin;
+    glm::vec4 vec4 = box_corners[3] - origin;
+    glm::vec4 vec5 = box_corners[4] - origin;
+    normals.push_back(crossproduct(vec2, vec3));
+    normals.push_back(crossproduct(vec2, vec4));
+    normals.push_back(crossproduct(vec2, vec5));
+
+    for(int i = 0; i < 3; i++){
+        normals[i] = normals[i] / norm(normals[i]);
+    }
+    return normals;
 }
