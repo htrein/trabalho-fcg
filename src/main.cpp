@@ -174,7 +174,7 @@ int bezier_direction = 1;
 
 //Sistema de Pontuação
 int score = 0;
-std::vector<bool> carrots_collected(5, false);
+std::vector<bool> carrots_collected(10, false);
 void TextRendering_ShowScore(GLFWwindow* window);
 //------
 
@@ -276,10 +276,10 @@ int main(int argc, char* argv[])
 
     ObjModel boxmodel = ComputeObject("../../data/woodenCrate.obj", &g_VirtualScene);
     ColliderBox box_limits = createBoundingBox(boxmodel.attrib);
+   
     float base_scale = 0.3f;
     float base_spacing = 1.0f;
-    float step_height = 0.7f;
-
+    float step_height = 0.9f;
     for (int i = 0; i < 5; ++i) {
         float scale = base_scale - i * 0.05f;
         float spacing = base_spacing + i * 0.5f;
@@ -290,6 +290,30 @@ int main(int argc, char* argv[])
         glm::vec3 carrot_bbox_min = glm::vec3(-0.3f, -0.3f, -0.3f); 
         glm::vec3 carrot_bbox_max = glm::vec3(0.3f, 0.3f, 0.3f);    
         glm::vec3 carrot_pos(i * spacing, step_height + 0.5f, 0.0f);
+        carrot_colliders.push_back({carrot_pos, carrot_bbox_min, carrot_bbox_max});
+    }
+
+    glm::vec3 last_pos = box_colliders.back().pos;
+    float last_scale = base_scale - 4 * 0.05f; 
+    float spiral_radius = 2.0f; 
+    float spiral_angle_step = glm::radians(60.0f); 
+    float spiral_height_step = 1.3f; 
+
+    for (int i = 0; i < 5; ++i) {
+        float scale = std::max(0.05f, last_scale - i * 0.05f);
+        float angle = i * spiral_angle_step;
+        glm::vec3 pos = last_pos
+            + glm::vec3(
+                spiral_radius * cos(angle),
+                (i+1) * spiral_height_step * (1 + 0.2f * i),
+                spiral_radius * sin(angle)
+            );
+        glm::vec3 bbox_min = box_limits.bbox_min * scale;
+        glm::vec3 bbox_max = box_limits.bbox_max * scale;
+        box_colliders.push_back({pos, bbox_min, bbox_max});
+        glm::vec3 carrot_bbox_min = glm::vec3(-0.3f, -0.3f, -0.3f);
+        glm::vec3 carrot_bbox_max = glm::vec3(0.3f, 0.3f, 0.3f);
+        glm::vec3 carrot_pos = pos + glm::vec3(0.0f, 0.5f + scale * 7.0f, 0.0f);
         carrot_colliders.push_back({carrot_pos, carrot_bbox_min, carrot_bbox_max});
     }
 
@@ -514,7 +538,7 @@ int main(int argc, char* argv[])
             float base_spacing = 1.0f;
             float spacing = base_spacing + i * 0.5f;
 
-            float step_height = 0.7f * i;
+            float step_height = 0.9f * i;
 
             model2 = model2 * Matrix_Translate(i * spacing, step_height, 0.0f);
             model2 = model2 * Matrix_Scale(scale, scale, scale);
@@ -538,7 +562,42 @@ int main(int argc, char* argv[])
 
             PopMatrix(model2);
         }
-        PopMatrix(model2);
+
+        glm::vec3 last_pos = box_colliders[4].pos;
+        float last_scale = 0.3f - 4 * 0.05f;
+        float spiral_radius = 2.0f;
+        float spiral_angle_step = glm::radians(60.0f);
+        float spiral_height_step = 1.3f;
+
+        for (int i = 0; i < 5; ++i)
+        {
+            float scale = std::max(0.05f, last_scale - i * 0.05f);
+            float angle = i * spiral_angle_step;
+            glm::vec3 pos = last_pos
+                + glm::vec3(
+                    spiral_radius * cos(angle),
+                    (i+1) * spiral_height_step * (1 + 0.2f * i),
+                    spiral_radius * sin(angle)
+                );
+
+            glm::mat4 box_model = Matrix_Translate(pos.x, pos.y, pos.z) * Matrix_Scale(scale, scale, scale);
+
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(box_model));
+            glUniform1i(g_object_id_uniform, BOX);
+            DrawVirtualObject("Crate_Plane.005");
+
+            int carrot_idx = i + 5;
+            if (!carrots_collected[carrot_idx]) {
+                glm::mat4 carrot_model = box_model
+                    * Matrix_Translate(0.0f, 7.0f, 0.0f)
+                    * Matrix_Scale(0.02f, 0.02f, 0.02f)
+                    * Matrix_Rotate_X(-3.141592f/2.0f);
+
+                glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(carrot_model));
+                glUniform1i(g_object_id_uniform, CARROT);
+                DrawVirtualObject("10170_Carrot_v01");
+            }
+        }
 
         // Cadeira
         glm::mat4 transform_chair = Matrix_Translate(-2.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
