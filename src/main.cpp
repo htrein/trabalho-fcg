@@ -60,6 +60,7 @@
 
 std::vector<ColliderBox> box_colliders; //vetor de objetos colidíveis
 std::vector<ColliderSphere> sphere_colliders;
+std::vector<ColliderBox> carrot_colliders;
 
 // Declaração de funções utilizadas para pilha de matrizes de modelagem.
 void PushMatrix(glm::mat4 M);
@@ -88,9 +89,6 @@ void TextRendering_PrintMatrixVectorProductDivW(GLFWwindow* window, glm::mat4 M,
 
 // Funções abaixo renderizam como texto na janela OpenGL algumas matrizes e
 // outras informações do programa. Definidas após main().
-void TextRendering_ShowModelViewProjection(GLFWwindow* window, glm::mat4 projection, glm::mat4 view, glm::mat4 model, glm::vec4 p_model);
-void TextRendering_ShowEulerAngles(GLFWwindow* window);
-void TextRendering_ShowProjection(GLFWwindow* window);
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window);
 
 // Funções callback para comunicação com o sistema operacional e interação do
@@ -164,6 +162,7 @@ bool firstpCamera = false;
 glm::vec3 g_BunnyPosition = glm::vec3(3.0f, -1.0f, 0.0f);
 float g_BunnySpeed = 2.0f;
 
+//Curva de Bezier Obstáculos
 glm::vec3 bezier_p0 = glm::vec3(8.0f, 2.8f, 0.0f);   
 glm::vec3 bezier_p1 = glm::vec3(9.5f, 4.5f,  2.0f);   
 glm::vec3 bezier_p2 = glm::vec3(11.0f, 2.0f, -2.0f);  
@@ -171,6 +170,13 @@ glm::vec3 bezier_p3 = glm::vec3(12.5f, 3.5f, 0.0f);
 float bezier_time = 0.0f;
 float bezier_speed = 0.08f; 
 int bezier_direction = 1;
+//------
+
+//Sistema de Pontuação
+int score = 0;
+std::vector<bool> carrots_collected(5, false);
+void TextRendering_ShowScore(GLFWwindow* window);
+//------
 
 int main(int argc, char* argv[])
 {
@@ -281,6 +287,10 @@ int main(int argc, char* argv[])
         glm::vec3 bbox_min = box_limits.bbox_min * scale;
         glm::vec3 bbox_max = box_limits.bbox_max * scale;
         box_colliders.push_back({pos, bbox_min, bbox_max});
+        glm::vec3 carrot_bbox_min = glm::vec3(-0.3f, -0.3f, -0.3f); 
+        glm::vec3 carrot_bbox_max = glm::vec3(0.3f, 0.3f, 0.3f);    
+        glm::vec3 carrot_pos(i * spacing, step_height + 0.5f, 0.0f);
+        carrot_colliders.push_back({carrot_pos, carrot_bbox_min, carrot_bbox_max});
     }
 
     ObjModel chair = ComputeObject("../../data/leather_chair.obj", &g_VirtualScene);
@@ -288,7 +298,7 @@ int main(int argc, char* argv[])
     chair_limits.pos = glm::vec3(-2.0f, -1.0f, 0.0f);
     chair_limits.bbox_min *= glm::vec3(2.0f, 1.0f, 2.0f);
     chair_limits.bbox_max *= glm::vec3(2.0f, 1.0f, 2.0f);
-    //box_colliders.push_back(chair_limits);
+    box_colliders.push_back(chair_limits);
     
     if ( argc > 1 )
     {
@@ -480,17 +490,19 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, SOCCER_BALL); 
         DrawVirtualObject("soccer_ball"); 
 
-        // Coelho
         glm::mat4 transform_bunny = Matrix_Translate(g_BunnyPosition.x, g_BunnyPosition.y, g_BunnyPosition.z)
-              * Matrix_Rotate_Z(g_AngleZ)
-              * Matrix_Rotate_Y(g_AngleY)
-              * Matrix_Rotate_X(g_AngleX);
-        model = transform_bunny;
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, BUNNY);
-        DrawVirtualObject("hare");
+            * Matrix_Rotate_Z(g_AngleZ)
+            * Matrix_Rotate_Y(g_AngleY)
+            * Matrix_Rotate_X(g_AngleX);
+        if (!firstpCamera)  
+        {
+            model = transform_bunny;
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, BUNNY);
+            DrawVirtualObject("hare");
+        }   
         drawBoundingBox(bunny_collider, transform_bunny, g_model_uniform, g_object_id_uniform); 
-
+        
         glActiveTexture(GL_TEXTURE3);
         glm::mat4 model2 = Matrix_Identity();
         PushMatrix(model2);
@@ -513,13 +525,18 @@ int main(int argc, char* argv[])
             glUniform1i(g_object_id_uniform, BOX);
             DrawVirtualObject("Crate_Plane.005");
 
-            glm::mat4 carrot_model = model2 
-            * Matrix_Translate(0.0f, 7.0f, 0.0f)     
-            * Matrix_Scale(0.02f, 0.02f, 0.02f)      
-            * Matrix_Rotate_X(-3.141592/2.0f);       
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(carrot_model));
-            glUniform1i(g_object_id_uniform, CARROT);
-            DrawVirtualObject("10170_Carrot_v01");      
+            if (!carrots_collected[i]) {
+                glm::vec4 carrot_world_pos = model2 * glm::vec4(0.0f, 7.0f, 0.0f, 1.0f);
+                carrot_colliders[i].pos = glm::vec3(carrot_world_pos);
+                glm::mat4 carrot_model = model2 
+                    * Matrix_Translate(0.0f, 7.0f, 0.0f)     
+                    * Matrix_Scale(0.02f, 0.02f, 0.02f)      
+                    * Matrix_Rotate_X(-3.141592/2.0f);       
+                
+                glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(carrot_model));
+                glUniform1i(g_object_id_uniform, CARROT);
+                DrawVirtualObject("10170_Carrot_v01");
+            }  
 
             PopMatrix(model2);
         }
@@ -554,6 +571,20 @@ int main(int argc, char* argv[])
             printf("c\n");
         }
 
+        //Carrot Collision  
+        for (int i = 0; i < carrot_colliders.size(); i++) {
+            if (!carrots_collected[i]) {  
+                glm::vec3 carrot_min = carrot_colliders[i].pos + carrot_colliders[i].bbox_min;
+                glm::vec3 carrot_max = carrot_colliders[i].pos + carrot_colliders[i].bbox_max;
+                glm::vec3 bunny_min = g_BunnyPosition + bunny_collider.bbox_min;
+                glm::vec3 bunny_max = g_BunnyPosition + bunny_collider.bbox_max;
+
+                if (AABBCollision(bunny_min, bunny_max, carrot_min, carrot_max)) {
+                    carrots_collected[i] = true;  
+                    score += 100;  
+                }
+            }
+        }
         // Iterador dos colliders
         for (auto& col : sphere_colliders) {
             // Colisor no espaco do mundo
@@ -593,14 +624,7 @@ int main(int argc, char* argv[])
         //atualiza posicao
         previous_bunny_position = g_BunnyPosition;
 
-        
-
-        // Imprimimos na tela os ângulos de Euler que controlam a rotação do
-        // terceiro cubo.
-        TextRendering_ShowEulerAngles(window);
-
-        // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
-        TextRendering_ShowProjection(window);
+        TextRendering_ShowScore(window); 
 
         // Imprimimos na tela informação sobre o número de quadros renderizados
         // por segundo (frames per second).
@@ -748,7 +772,6 @@ void LoadShadersFromFiles()
     g_object_id_uniform  = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
     g_camera_position_uniform = glGetUniformLocation(g_GpuProgramID, "position_camera"); // Variável "position_camera" em shader_fragment.glsl
 
-    // NOVO
     glUseProgram(g_GpuProgramID);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage0"), 0);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage1"), 1);
@@ -1123,98 +1146,6 @@ void ErrorCallback(int error, const char* description)
     fprintf(stderr, "ERROR: GLFW: %s\n", description);
 }
 
-// Esta função recebe um vértice com coordenadas de modelo p_model e passa o
-// mesmo por todos os sistemas de coordenadas armazenados nas matrizes model,
-// view, e projection; e escreve na tela as matrizes e pontos resultantes
-// dessas transformações.
-void TextRendering_ShowModelViewProjection(
-    GLFWwindow* window,
-    glm::mat4 projection,
-    glm::mat4 view,
-    glm::mat4 model,
-    glm::vec4 p_model
-)
-{
-    if ( !g_ShowInfoText )
-        return;
-
-    glm::vec4 p_world = model*p_model;
-    glm::vec4 p_camera = view*p_world;
-    glm::vec4 p_clip = projection*p_camera;
-    glm::vec4 p_ndc = p_clip / p_clip.w;
-
-    float pad = TextRendering_LineHeight(window);
-
-    TextRendering_PrintString(window, " Model matrix             Model     In World Coords.", -1.0f, 1.0f-pad, 1.0f);
-    TextRendering_PrintMatrixVectorProduct(window, model, p_model, -1.0f, 1.0f-2*pad, 1.0f);
-
-    TextRendering_PrintString(window, "                                        |  ", -1.0f, 1.0f-6*pad, 1.0f);
-    TextRendering_PrintString(window, "                            .-----------'  ", -1.0f, 1.0f-7*pad, 1.0f);
-    TextRendering_PrintString(window, "                            V              ", -1.0f, 1.0f-8*pad, 1.0f);
-
-    TextRendering_PrintString(window, " View matrix              World     In Camera Coords.", -1.0f, 1.0f-9*pad, 1.0f);
-    TextRendering_PrintMatrixVectorProduct(window, view, p_world, -1.0f, 1.0f-10*pad, 1.0f);
-
-    TextRendering_PrintString(window, "                                        |  ", -1.0f, 1.0f-14*pad, 1.0f);
-    TextRendering_PrintString(window, "                            .-----------'  ", -1.0f, 1.0f-15*pad, 1.0f);
-    TextRendering_PrintString(window, "                            V              ", -1.0f, 1.0f-16*pad, 1.0f);
-
-    TextRendering_PrintString(window, " Projection matrix        Camera                    In NDC", -1.0f, 1.0f-17*pad, 1.0f);
-    TextRendering_PrintMatrixVectorProductDivW(window, projection, p_camera, -1.0f, 1.0f-18*pad, 1.0f);
-
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-
-    glm::vec2 a = glm::vec2(-1, -1);
-    glm::vec2 b = glm::vec2(+1, +1);
-    glm::vec2 p = glm::vec2( 0,  0);
-    glm::vec2 q = glm::vec2(width, height);
-
-    glm::mat4 viewport_mapping = Matrix(
-        (q.x - p.x)/(b.x-a.x), 0.0f, 0.0f, (b.x*p.x - a.x*q.x)/(b.x-a.x),
-        0.0f, (q.y - p.y)/(b.y-a.y), 0.0f, (b.y*p.y - a.y*q.y)/(b.y-a.y),
-        0.0f , 0.0f , 1.0f , 0.0f ,
-        0.0f , 0.0f , 0.0f , 1.0f
-    );
-
-    TextRendering_PrintString(window, "                                                       |  ", -1.0f, 1.0f-22*pad, 1.0f);
-    TextRendering_PrintString(window, "                            .--------------------------'  ", -1.0f, 1.0f-23*pad, 1.0f);
-    TextRendering_PrintString(window, "                            V                           ", -1.0f, 1.0f-24*pad, 1.0f);
-
-    TextRendering_PrintString(window, " Viewport matrix           NDC      In Pixel Coords.", -1.0f, 1.0f-25*pad, 1.0f);
-    TextRendering_PrintMatrixVectorProductMoreDigits(window, viewport_mapping, p_ndc, -1.0f, 1.0f-26*pad, 1.0f);
-}
-
-// Escrevemos na tela os ângulos de Euler definidos nas variáveis globais
-// g_AngleX, g_AngleY, e g_AngleZ.
-void TextRendering_ShowEulerAngles(GLFWwindow* window)
-{
-    if ( !g_ShowInfoText )
-        return;
-
-    float pad = TextRendering_LineHeight(window);
-
-    char buffer[80];
-    snprintf(buffer, 80, "Euler Angles rotation matrix = Z(%.2f)*Y(%.2f)*X(%.2f)\n", g_AngleZ, g_AngleY, g_AngleX);
-
-    TextRendering_PrintString(window, buffer, -1.0f+pad/10, -1.0f+2*pad/10, 1.0f);
-}
-
-// Escrevemos na tela qual matriz de projeção está sendo utilizada.
-void TextRendering_ShowProjection(GLFWwindow* window)
-{
-    if ( !g_ShowInfoText )
-        return;
-
-    float lineheight = TextRendering_LineHeight(window);
-    float charwidth = TextRendering_CharWidth(window);
-
-    if ( g_UsePerspectiveProjection )
-        TextRendering_PrintString(window, "Perspective", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
-    else
-        TextRendering_PrintString(window, "Orthographic", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
-}
-
 // Escrevemos na tela o número de quadros renderizados por segundo (frames per
 // second).
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window)
@@ -1285,4 +1216,17 @@ glm::vec3 BezierCubic(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, fl
     p += 3 * u * tt * p2;   // 3*(1-t) * t^2 * P2
     p += ttt * p3;          // t^3 * P3
     return p;
+}
+void TextRendering_ShowScore(GLFWwindow* window)
+{
+    if (!g_ShowInfoText)
+        return;
+
+    char buffer[80];
+    snprintf(buffer, 80, "Score: %d", score);
+
+    float lineheight = TextRendering_LineHeight(window);
+    float charwidth = TextRendering_CharWidth(window);
+
+    TextRendering_PrintString(window, buffer, -1.0f+charwidth, 1.0f-lineheight, 1.0f);
 }
