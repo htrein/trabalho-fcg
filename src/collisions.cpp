@@ -45,8 +45,8 @@ bool BoxBoxCollision(ColliderBox box1, ColliderBox box2, glm::mat4 col1_transfor
     std::vector<glm::vec4> box_corners2 = cornersOfBox(box2);
     std::vector<glm::vec4> localNormals = getBoxNormals();
 
-    glm::mat3 normalMatrix1 = glm::transpose(glm::inverse(glm::mat3(col1_transform)));
-    glm::mat3 normalMatrix2 = glm::transpose(glm::inverse(glm::mat3(col2_transform)));
+    glm::mat4 normalMatrix1 = glm::transpose(glm::inverse(col1_transform));
+    glm::mat4 normalMatrix2 = glm::transpose(glm::inverse(col2_transform));
 
     // Convertendo tudo para as coordenadas do mundo
     for(long unsigned int i = 0; i < box_corners1.size(); i++){
@@ -59,8 +59,8 @@ bool BoxBoxCollision(ColliderBox box1, ColliderBox box2, glm::mat4 col1_transfor
 
     std::vector<glm::vec4> world_normals1, world_normals2;    
     for(long unsigned int i = 0; i < localNormals.size(); i++){
-        world_normals1.push_back(glm::vec4(normalMatrix1 * glm::vec3(localNormals[i]), 0.0f));
-        world_normals2.push_back(glm::vec4(normalMatrix2 * glm::vec3(localNormals[i]), 0.0f));
+        world_normals1.push_back(normalMatrix1 * localNormals[i]);
+        world_normals2.push_back(normalMatrix2 * localNormals[i]);
     } 
 
     // 3 normais das caixas
@@ -84,10 +84,10 @@ bool BoxBoxCollision(ColliderBox box1, ColliderBox box2, glm::mat4 col1_transfor
     for(int i = 0; i < 3; i++){
         for(int j = 0; j < 3; j++){
             glm::vec4 normal = crossproduct(world_normals1[i], world_normals2[j]);
+            //printf("normal[%d%d]: x = %f, y = %f, z = %f\n", i,j, normal.x, normal.y, normal.z);
             if(norm(normal) < 0.001f) continue; // Evitar vetores nulos
-            glm::vec4 norm_axis = normal / norm(normal);
-            std::pair<float, float> limits1 = projectionLimits(box_corners1, norm_axis);
-            std::pair<float, float> limits2 = projectionLimits(box_corners2, norm_axis);
+            std::pair<float, float> limits1 = projectionLimits(box_corners1, normal);
+            std::pair<float, float> limits2 = projectionLimits(box_corners2, normal);
             if(!overlapHappend(limits1, limits2)){
                 return false;
             }
@@ -111,9 +111,10 @@ std::vector<glm::vec4> cornersOfBox(ColliderBox box){
 }
 
 std::pair<float, float> projectionLimits(const std::vector<glm::vec4>& vertices, glm::vec4 axis){
+    axis = glm::normalize(axis);
+
     float min = std::numeric_limits<float>::max();
     float max = std::numeric_limits<float>::min();
-    axis = axis / norm(axis); // Garante que o eixo esteja normalizado
     for (const auto& vertex : vertices){
         float projection = glm::dot(vertex, axis);
 
@@ -128,12 +129,9 @@ std::pair<float, float> projectionLimits(const std::vector<glm::vec4>& vertices,
 }
 
 bool overlapHappend(std::pair<float, float> limits1, std::pair<float, float> limits2){
-    // Verifica se os intervalos se sobrepõem
-    return (limits1.first <= limits2.second && limits1.second >= limits2.first);
-    // Explicação da lógica:
-    // - limits1.first <= limits2.second: O início do intervalo 1 está antes do fim do intervalo 2.
-    // - limits1.second >= limits2.first: O fim do intervalo 1 está depois do início do intervalo 2.
-    // Se ambas as condições forem verdadeiras, os intervalos se sobrepõem.
+    // This is the standard, robust check for 1D interval overlap.
+    // It returns true if (max1 >= min2) AND (max2 >= min1).
+    return limits1.second >= limits2.first && limits2.second >= limits1.first;
 }
 
 std::vector<glm::vec4> getBoxNormals() {

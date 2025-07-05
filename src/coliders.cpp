@@ -22,7 +22,7 @@ ColliderBox createBoundingBox(const tinyobj::attrib_t& atrib){
     }
     glm::vec3 bbox_min = glm::vec3(min_x, min_y, min_z);
     glm::vec3 bbox_max = glm::vec3(max_x, max_y, max_z);
-    glm::vec3 center = (bbox_min + bbox_max) * 0.5f;
+    glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f);
 
     return {center, bbox_min, bbox_max};
 }

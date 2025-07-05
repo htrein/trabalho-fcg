@@ -296,8 +296,6 @@ int main(int argc, char* argv[])
     ObjModel chair = ComputeObject("../../data/leather_chair.obj", &g_VirtualScene);
     ColliderBox chair_limits = createBoundingBox(chair.attrib);
     chair_limits.pos = glm::vec3(-2.0f, -1.0f, 0.0f);
-    chair_limits.bbox_min *= glm::vec3(2.0f, 1.0f, 2.0f);
-    chair_limits.bbox_max *= glm::vec3(2.0f, 1.0f, 2.0f);
     box_colliders.push_back(chair_limits);
     
     if ( argc > 1 )
@@ -543,7 +541,7 @@ int main(int argc, char* argv[])
         PopMatrix(model2);
 
         // Cadeira
-        glm::mat4 transform_chair = Matrix_Translate(-2.0f, -1.0f, 0.0f);// * Matrix_Scale(2.0f, 1.0f, 2.0f);
+        glm::mat4 transform_chair = Matrix_Translate(-2.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
         model = transform_chair;
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, CHAIR);
@@ -572,7 +570,7 @@ int main(int argc, char* argv[])
         }
 
         //Carrot Collision  
-        for (int i = 0; i < carrot_colliders.size(); i++) {
+        for (long unsigned int i = 0; i < carrot_colliders.size(); i++) {
             if (!carrots_collected[i]) {  
                 glm::vec3 carrot_min = carrot_colliders[i].pos + carrot_colliders[i].bbox_min;
                 glm::vec3 carrot_max = carrot_colliders[i].pos + carrot_colliders[i].bbox_max;
