@@ -497,7 +497,7 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
         
         // Chão
-        model = Matrix_Translate(0.0f, 1.0f, 0.0f) * Matrix_Scale(50.0f, 50.0f, 50.0f);
+        model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(50.0f, 50.0f, 50.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("plane");
@@ -535,7 +535,7 @@ int main(int argc, char* argv[])
             glUniform1i(g_object_id_uniform, BUNNY);
             DrawVirtualObject("hare");
         }   
-        drawBoundingBox(bunny_collider, transform_bunny, g_model_uniform, g_object_id_uniform); 
+        //drawBoundingBox(bunny_collider, transform_bunny, g_model_uniform, g_object_id_uniform); 
         
         glActiveTexture(GL_TEXTURE3);
         glm::mat4 model2 = Matrix_Identity();
@@ -617,7 +617,7 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, CHAIR);
         DrawVirtualObject("leather_chair");
-        drawBoundingBox(chair_limits, transform_chair, g_model_uniform, g_object_id_uniform); 
+        //drawBoundingBox(chair_limits, transform_chair, g_model_uniform, g_object_id_uniform); 
         
         // Cálculo colisões
         glm::vec3 bunny_min = g_BunnyPosition + bunny_collider.bbox_min;
@@ -634,15 +634,15 @@ int main(int argc, char* argv[])
             }
         }
 
-        std::pair<glm::vec4, glm::vec4> test_line_plane_collision = std::pair<glm::vec4, glm::vec4>(glm::vec4(-10.0f, 1.0f, -10.0f, 1.0f), glm::vec4(10.0f, 1.0f, 10.0f, 1.0f));
-        if(BoxPlaneCollision(bunny_collider, test_line_plane_collision, transform_bunny, Matrix_Identity())){
-            if(!bunny_collider.collidedWithPlane){
-                printf("c\n");
-                bunny_collider.collidedWithPlane = true;
-            }
-        } else {
-            bunny_collider.collidedWithPlane = false;
-        }
+        // std::pair<glm::vec4, glm::vec4> test_line_plane_collision = std::pair<glm::vec4, glm::vec4>(glm::vec4(-10.0f, 1.0f, -10.0f, 1.0f), glm::vec4(10.0f, 1.0f, 10.0f, 1.0f));
+        // if(BoxPlaneCollision(bunny_collider, test_line_plane_collision, transform_bunny, Matrix_Identity())){
+        //     if(!bunny_collider.collidedWithPlane){
+        //         printf("c\n");
+        //         bunny_collider.collidedWithPlane = true;
+        //     }
+        // } else {
+        //     bunny_collider.collidedWithPlane = false;
+        // }
         
         //Carrot Collision  
         for (long unsigned int i = 0; i < carrot_colliders.size(); i++) {

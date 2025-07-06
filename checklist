@@ -21,7 +21,7 @@
 - [ V ] Utilizar no mínimo 3 imagens de textura distintas
 
 ## Colisões
-- [ ] Implementar 3 tipos de testes de intersecção (em collisions.cpp)
+- [ V ] Implementar 3 tipos de testes de intersecção (em collisions.cpp)
 
 ## Animações
 - [ ] Criar animação de movimento usando curva de Bézier cúbica
