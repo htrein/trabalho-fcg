@@ -392,10 +392,11 @@ int main(int argc, char* argv[])
             camera_lookat_l = glm::vec4(g_BunnyPosition, 1.0f);
             camera_view_vector = camera_lookat_l - camera_position_c;
         }
-
+        // Isso impede a câmera de ir para baixo do chão
+        camera_position_c.y = std::max(camera_position_c.y, -0.9f);
         glUniform4f(g_camera_position_uniform, camera_position_c.x, camera_position_c.y, camera_position_c.z, camera_position_c.w);
 
-        
+        printf("camera_position x = %f, y = %f, z = %f\n", camera_position_c.x, camera_position_c.y, camera_position_c.z);
         // Cálculos bezier
         float current_time = (float)glfwGetTime();
         float delta_time = current_time - last_time;
@@ -501,7 +502,7 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
         
         // Chão
-        model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(50.0f, 50.0f, 50.0f);
+        model = Matrix_Translate(g_BunnyPosition.x, -1.0f, g_BunnyPosition.z) * Matrix_Scale(50.0f, 50.0f, 50.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("plane");
