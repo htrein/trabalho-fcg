@@ -15,5 +15,5 @@ std::pair<float, float> projectionLimits(const std::vector<glm::vec4>& vertices,
 bool overlapHappend(std::pair<float, float> limits1, std::pair<float, float> limits2);
 std::vector<glm::vec4> getBoxNormals();
 bool BoxBoxCollision(ColliderBox box1, ColliderBox box2, glm::mat4 col1_transform, glm::mat4 col2_transform);
-bool BoxPlaneCollision(ColliderBox box, std::pair<glm::vec4, glm::vec4> limits_line, glm::mat4 col_transform, glm::mat4 line_transform);
+bool BoxPlaneCollision(const ColliderBox& box, const std::pair<glm::vec4, glm::vec4>& plane_limits_local, const glm::mat4& box_transform, const glm::mat4& plane_transform);
 #endif

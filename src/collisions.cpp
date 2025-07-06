@@ -177,23 +177,48 @@ void collisionTreatmentAABB(glm::vec3* g_BunnyPosition, ColliderBox bunny_limits
     }
 }
 
-bool BoxPlaneCollision(ColliderBox box, std::pair<glm::vec4, glm::vec4> limits_line, glm::mat4 col_transform, glm::mat4 line_transform){
-    limits_line.first = line_transform * limits_line.first;
-    limits_line.second = line_transform * limits_line.second;
+bool BoxPlaneCollision(const ColliderBox& box, const std::pair<glm::vec4, glm::vec4>& plane_limits_local, const glm::mat4& box_transform, const glm::mat4& plane_transform){
+    // Matriz para coloca o collider no espaco da linha
+    glm::mat4 box_to_plane_space = glm::inverse(plane_transform) * box_transform;
 
-    // Converte a box para as coordenadas de "horizontalizacao" do plano
-    std::vector<glm::vec4> corners = cornersOfBox(box);
-    for(long unsigned int i = 0; i < corners.size(); i++){
-        corners[i] = col_transform * corners[i];
+    std::vector<glm::vec4> box_corners = cornersOfBox(box);
+    float box_min_y = std::numeric_limits<float>::max();
+    float box_max_y = std::numeric_limits<float>::lowest();
 
-        bool below = corners[i].y < limits_line.first.y;
-        bool inRangeX = corners[i].x >= limits_line.first.x && corners[i].x <= limits_line.second.x;
-        bool inRangeZ = corners[i].z >= limits_line.first.z && corners[i].z <= limits_line.second.z;
-        if(below && inRangeX && inRangeZ){
-            return true;
-        }
+    // Encontra o maior e menor y
+    for (auto& corner : box_corners) {
+        corner = box_to_plane_space * corner;
+        box_min_y = std::min(box_min_y, corner.y);
+        box_max_y = std::max(box_max_y, corner.y);
     }
-    return false;
+
+    // Se o ponto mais baixo estiver acima
+    // Ou o ponto mais alto estiver abaixo
+    const float plane_y = plane_limits_local.first.y;
+    if (box_max_y < plane_y || box_min_y > plane_y) {
+        return false;
+    }
+
+    // Constroi uma AABB para o collider
+    glm::vec3 box_min_aabb(box_corners[0]);
+    glm::vec3 box_max_aabb(box_corners[0]);
+    for (const auto& corner : box_corners) {
+        box_min_aabb.x = std::min(box_min_aabb.x, corner.x);
+        box_min_aabb.z = std::min(box_min_aabb.z, corner.z);
+        box_max_aabb.x = std::max(box_max_aabb.x, corner.x);
+        box_max_aabb.z = std::max(box_max_aabb.z, corner.z);
+    }
+
+    const float plane_min_x = std::min(plane_limits_local.first.x, plane_limits_local.second.x);
+    const float plane_max_x = std::max(plane_limits_local.first.x, plane_limits_local.second.x);
+    const float plane_min_z = std::min(plane_limits_local.first.z, plane_limits_local.second.z);
+    const float plane_max_z = std::max(plane_limits_local.first.z, plane_limits_local.second.z);
+
+    // Se houve overlap no x e z
+    const bool overlap_x = box_max_aabb.x >= plane_min_x && box_min_aabb.x <= plane_max_x;
+    const bool overlap_z = box_max_aabb.z >= plane_min_z && box_min_aabb.z <= plane_max_z;
+
+    return overlap_x && overlap_z;
 }
 void collisionTreatmentBozPlane(glm::vec3* g_BunnyPosition, ColliderBox bunny_limits, glm::vec3 obj_min, glm::vec3 obj_max, glm::vec3 previous_bunny_position, float folga, bool* jumping, bool* on_top, float* jump_velocity){
     glm::vec3 bunny_min = *g_BunnyPosition + bunny_limits.bbox_min;
