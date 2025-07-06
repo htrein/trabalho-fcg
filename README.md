@@ -8,6 +8,13 @@
 - Ambient Mapping;
 - Desenho da hitbox de modelos para debug;
 ### Henrique:
+    Construção do circuito: disposição, textura e colisão das caixas. Pontuação, disposição, textura e colisão das cenouras;
+    Movimentação/Pulo e Aumento/Diminuição do Coelho;
+    Câmeras;
+    AABB;
+    Aplicação da bola de futebol como objeto animado pelo tempo com movimentação por uma curva de Bezier;
+    Blinn-phong e lambert para alguns modelos;
+
 
 ## Relato de uso de ferramentas de IA (ChatGPT, Copilot, etc.):
 ### Alef:

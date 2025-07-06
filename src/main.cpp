@@ -47,8 +47,6 @@
 #include "colliders.hpp"
 #include "boundingBox.hpp"
 
-
-// NOVO
 #define SPHERE 0
 #define BUNNY  1
 #define PLANE  2
@@ -159,10 +157,15 @@ GLint g_object_id_uniform;
 GLuint g_NumLoadedTextures = 0;
 GLint g_camera_position_uniform;
 
+//Camera
 bool firstpCamera = false;
+//------
+
+//Coelho
 glm::vec3 g_BunnyPosition = glm::vec3(3.0f, -1.0f, 0.0f);
 float g_BunnySpeed = 2.0f;
 float g_BunnyScale = 1.0f;
+//------
 
 //Curva de Bezier Obstáculos
 glm::vec3 bezier_p0 = glm::vec3(8.0f, 2.8f, 0.0f);   
@@ -278,7 +281,6 @@ int main(int argc, char* argv[])
 
     ObjModel boxmodel = ComputeObject("../../data/woodenCrate.obj", &g_VirtualScene);
     ColliderBox box_limits = createBoundingBox(boxmodel.attrib);
-   
     float base_scale = 0.3f;
     float base_spacing = 1.0f;
     float step_height = 0.9f;
@@ -321,7 +323,7 @@ int main(int argc, char* argv[])
 
     ObjModel chair = ComputeObject("../../data/leather_chair.obj", &g_VirtualScene);
     ColliderBox chair_limits = createBoundingBox(chair.attrib);
-    chair_limits.pos = glm::vec3(-2.0f, -1.0f, 0.0f);
+    chair_limits.pos = glm::vec3(-4.0f, -1.0f, 0.0f);
     chair_limits.bbox_min *= glm::vec3(2.0f, 1.0f, 2.0f);
     chair_limits.bbox_max *= glm::vec3(2.0f, 1.0f, 2.0f);
     box_colliders.push_back(chair_limits);
@@ -616,7 +618,7 @@ int main(int argc, char* argv[])
         }
 
         // Cadeira
-        glm::mat4 transform_chair = Matrix_Translate(-2.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
+        glm::mat4 transform_chair = Matrix_Translate(-4.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
         model = transform_chair;
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, CHAIR);
@@ -624,8 +626,11 @@ int main(int argc, char* argv[])
         //drawBoundingBox(chair_limits, transform_chair, g_model_uniform, g_object_id_uniform); 
         
         // Cálculo colisões
-        glm::vec3 bunny_min = g_BunnyPosition + bunny_collider.bbox_min;
-        glm::vec3 bunny_max = g_BunnyPosition + bunny_collider.bbox_max;
+        ColliderBox scaled_bunny_collider = bunny_collider;
+        scaled_bunny_collider.bbox_min *= g_BunnyScale;
+        scaled_bunny_collider.bbox_max *= g_BunnyScale;
+        glm::vec3 bunny_min = g_BunnyPosition + scaled_bunny_collider.bbox_min;
+        glm::vec3 bunny_max = g_BunnyPosition + scaled_bunny_collider.bbox_max;
         bool on_top = false; //verifica se o personagem está em cima de um obj
         const float folga = 0.01f; //folga para evitar jittering
         //para cada objeto colidivel testa se há colisao
@@ -634,28 +639,20 @@ int main(int argc, char* argv[])
             glm::vec3 obj_max = col.pos + col.bbox_max;
             if (AABBCollision(bunny_min, bunny_max, obj_min, obj_max)) {
                 // Se o coelho estava acima do objeto, mas seu limite inferior já estava dentro
-                collisionTreatmentAABB(&g_BunnyPosition, bunny_collider, obj_min, obj_max, previous_bunny_position, folga, &jumping, &on_top, &jump_velocity);
+                collisionTreatmentAABB(&g_BunnyPosition, scaled_bunny_collider, obj_min, obj_max, previous_bunny_position, folga, &jumping, &on_top, &jump_velocity);
             }
         }
-
-        // std::pair<glm::vec4, glm::vec4> test_line_plane_collision = std::pair<glm::vec4, glm::vec4>(glm::vec4(-10.0f, 1.0f, -10.0f, 1.0f), glm::vec4(10.0f, 1.0f, 10.0f, 1.0f));
-        // if(BoxPlaneCollision(bunny_collider, test_line_plane_collision, transform_bunny, Matrix_Identity())){
-        //     if(!bunny_collider.collidedWithPlane){
-        //         printf("c\n");
-        //         bunny_collider.collidedWithPlane = true;
-        //     }
-        // } else {
-        //     bunny_collider.collidedWithPlane = false;
-        // }
         
         //Carrot Collision  
         for (long unsigned int i = 0; i < carrot_colliders.size(); i++) {
             if (!carrots_collected[i]) {  
                 glm::vec3 carrot_min = carrot_colliders[i].pos + carrot_colliders[i].bbox_min;
                 glm::vec3 carrot_max = carrot_colliders[i].pos + carrot_colliders[i].bbox_max;
-                glm::vec3 bunny_min = g_BunnyPosition + bunny_collider.bbox_min;
-                glm::vec3 bunny_max = g_BunnyPosition + bunny_collider.bbox_max;
-
+                ColliderBox scaled_bunny_collider = bunny_collider;
+                scaled_bunny_collider.bbox_min *= g_BunnyScale;
+                scaled_bunny_collider.bbox_max *= g_BunnyScale;
+                glm::vec3 bunny_min = g_BunnyPosition + scaled_bunny_collider.bbox_min;
+                glm::vec3 bunny_max = g_BunnyPosition + scaled_bunny_collider.bbox_max;
                 if (AABBCollision(bunny_min, bunny_max, carrot_min, carrot_max)) {
                     carrots_collected[i] = true;  
                     score += 100;  
