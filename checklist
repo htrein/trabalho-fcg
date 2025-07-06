@@ -5,7 +5,7 @@
 - [ V ] Criar múltiplas instâncias (usar Model Matrix) para pelo menos 1 objeto
 
 ## Interação
-- [ ] Implementar controles de usuário para transformações geométricas (translação, rotação, escala)
+- [ V ] Implementar controles de usuário para transformações geométricas (translação, rotação, escala)
 
 ## Câmeras
 - [ V ] Implementar no mínimo 2 tipos de câmeras diferentes
@@ -27,12 +27,3 @@
 - [ V ] Criar animação de movimento usando curva de Bézier cúbica
 - [ V ] Implementar animação baseada em tempo (não em frames)
 
-## Documentação
-- [ ] README.md com:
-  - [ ] Divisão de contribuições entre os membros
-  - [ ] Relato de uso de ferramentas de IA (ChatGPT, Copilot, etc.)
-  - [ ] Descrição dos conceitos de CG implementados
-  - [ ] Pelo menos 2 imagens da aplicação
-  - [ ] Manual de uso (atalhos de teclado/mouse)
-  - [ ] Instruções de compilação e execução
-- [ ] Vídeo de 3-5 minutos demonstrando a aplicação

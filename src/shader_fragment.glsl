@@ -27,11 +27,9 @@ uniform sampler2D TextureImage5;
 uniform sampler2D TextureImage6;
 
 // Identificador que define qual objeto está sendo desenhado no momento
-#define SPHERE 0
 #define BUNNY  1
 #define PLANE  2
 #define CHAIR 3
-// NOVO
 #define SKY_SPHERE 4
 #define BOX 5
 #define SOCCER_BALL 6
@@ -42,7 +40,6 @@ uniform int object_id;
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
 
-// NOVO
 // Constantes
 #define M_PI   3.14159265358979323846
 #define M_PI_2 1.57079632679489661923
@@ -82,15 +79,7 @@ void main()
 
     vec4 h = normalize(v + l); //vetor para BLinn-Phong
 
-    if ( object_id == SPHERE )
-    {
-        // Propriedades espectrais da esfera
-        Kd = vec3(0.8,0.4,0.08);
-        Ks = vec3(0.0,0.0,0.0);
-        Ka = Kd * 0.5;
-        q = 1.0;
-    }
-    else if ( object_id == BUNNY )
+    if ( object_id == BUNNY )
     {
         // Propriedades espectrais do coelho
         Kd = vec3(1.0, 1.0, 1.0);
@@ -154,18 +143,6 @@ void main()
     // Termo especular utilizando Blinn-Phong
     vec3 blinn_phong_specular_term = Ks * I * pow(max(0.0, dot(n.xyz, h.xyz)), q);
 
-    // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
-    // necessário:
-    // 1) Habilitar a operação de "blending" de OpenGL logo antes de realizar o
-    //    desenho dos objetos transparentes, com os comandos abaixo no código C++:
-    //      glEnable(GL_BLEND);
-    //      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    // 2) Realizar o desenho de todos objetos transparentes *após* ter desenhado
-    //    todos os objetos opacos; e
-    // 3) Realizar o desenho de objetos transparentes ordenados de acordo com
-    //    suas distâncias para a câmera (desenhando primeiro objetos
-    //    transparentes que estão mais longe da câmera).
-    // Alpha default = 1 = 100% opaco = 0% transparente
     color.a = 1;
 
     // Coordenadas de textura U e V
@@ -215,12 +192,7 @@ void main()
     if (object_id == SKY_SPHERE)
     {
         color.rgb = tex_obj;
-    }
-    else if (object_id == SPHERE)
-    {
-        color.rgb = ambient_term + lambert_diffuse_term + blinn_phong_specular_term;
-    }
-    else
+    } else
     {
         vec3 textured_ambient = tex_obj * ambient_term;
         vec3 textured_diffuse = tex_obj * lambert_diffuse_term;

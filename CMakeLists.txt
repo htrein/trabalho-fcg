@@ -10,6 +10,11 @@ set(SOURCES
   src/textrendering.cpp
   src/tiny_obj_loader.cpp
   src/glad.c
+  src/collisions.cpp
+  src/stb_image.cpp
+  src/object.cpp
+  src/boundingBox.cpp
+  src/colliders.cpp
 )
 
 cmake_minimum_required(VERSION 3.5.0)
@@ -52,7 +57,7 @@ Por favor, atualize a lista de arquivos fonte no arquivo CMakeLists.txt.")
     break()
   endif()
 endforeach()
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 add_executable(${EXECUTABLE_NAME} ${SOURCES})
 
 target_include_directories(${EXECUTABLE_NAME} BEFORE PRIVATE ${PROJECT_SOURCE_DIR}/include)
