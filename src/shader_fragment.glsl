@@ -168,48 +168,36 @@ void main()
     // Alpha default = 1 = 100% opaco = 0% transparente
     color.a = 1;
 
-    // Coordenadas de textura U e V
-    float U = 0.0;
-    float V = 0.0;
     vec3 tex_obj;
+    vec2 final_texcoords = texcoords;
+
+    if (object_id == PLANE)
+    {
+        // Para o plano, usamos as coordenadas de mundo para que a textura pareça estática.
+        // O fator 0.1 serve para escalar a textura (deixe-a maior).
+        final_texcoords = position_world.xz * 0.1;
+    }
 
     if (object_id == BUNNY) {
-        U = texcoords.x;
-        V = texcoords.y;
-        tex_obj = texture(TextureImage0, vec2(U,V)).rgb;
+        tex_obj = texture(TextureImage0, final_texcoords).rgb;
     } else if ( object_id == CHAIR){
-        U = texcoords.x;
-        V = texcoords.y;
-        tex_obj = texture(TextureImage1, vec2(U,V)).rgb;
+        tex_obj = texture(TextureImage1, final_texcoords).rgb;
     } else if (object_id == SKY_SPHERE) {
         float sphere_rho = 1;
         vec4 camera_pos_a = vec4(camera_pos.x, camera_pos.y, camera_pos.z, 1);
         vec4 p_line = camera_pos_a + sphere_rho*normalize(position_model - camera_pos_a);
         vec4 p_vector = p_line - camera_pos;
-
         float sphere_theta = atan(p_vector[0], p_vector[2]);
         float sphere_psi = asin(p_vector[1]/sphere_rho);
-
-        U = (sphere_theta + M_PI) / (2*M_PI);
-        V = (sphere_psi + M_PI_2)/ M_PI;
-
-        tex_obj = texture(TextureImage2, vec2(U,V)).rgb;
+        tex_obj = texture(TextureImage2, vec2((sphere_theta + M_PI) / (2*M_PI), (sphere_psi + M_PI_2)/ M_PI)).rgb;
     } else if (object_id == BOX) {
-        U = texcoords.x;
-        V = texcoords.y;
-        tex_obj = texture(TextureImage3, vec2(U,V)).rgb;
+        tex_obj = texture(TextureImage3, final_texcoords).rgb;
     } else if (object_id == SOCCER_BALL) {
-        U = texcoords.x;
-        V = texcoords.y;
-        tex_obj = texture(TextureImage4, vec2(U,V)).rgb;
+        tex_obj = texture(TextureImage4, final_texcoords).rgb;
     } else if(object_id == PLANE){
-        U = texcoords.x;
-        V = texcoords.y;
-        tex_obj = texture(TextureImage5, vec2(U,V)).rgb;
+        tex_obj = texture(TextureImage5, final_texcoords).rgb;
     } else if (object_id == CARROT) {
-        U = texcoords.x;
-        V = texcoords.y;
-        tex_obj = texture(TextureImage6, vec2(U,V)).rgb;
+        tex_obj = texture(TextureImage6, final_texcoords).rgb;
     }
 
     if (object_id == SKY_SPHERE)
