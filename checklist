@@ -11,10 +11,10 @@
 - [ V ] Implementar no mínimo 2 tipos de câmeras diferentes
 
 ## Iluminação e Shading
-- [ ] Aplicar iluminação difusa em todos os objetos
-- [ ] Implementar modelo Blinn-Phong
-- [ ] Ter pelo menos 1 objeto com shading Gouraud
-- [ ] Ter pelo menos 1 objeto com shading Phong
+- [ V ] Aplicar iluminação difusa em todos os objetos
+- [ V ] Implementar modelo Blinn-Phong
+- [ V ] Ter pelo menos 1 objeto com shading Gouraud
+- [ V ] Ter pelo menos 1 objeto com shading Phong
 
 ## Texturas
 - [ V ] Todos os objetos devem usar texturas para cores (não cores sólidas)
@@ -24,8 +24,8 @@
 - [ V ] Implementar 3 tipos de testes de intersecção (em collisions.cpp)
 
 ## Animações
-- [ ] Criar animação de movimento usando curva de Bézier cúbica
-- [ ] Implementar animação baseada em tempo (não em frames)
+- [ V ] Criar animação de movimento usando curva de Bézier cúbica
+- [ V ] Implementar animação baseada em tempo (não em frames)
 
 ## Documentação
 - [ ] README.md com:
