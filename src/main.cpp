@@ -398,6 +398,7 @@ int main(int argc, char* argv[])
         camera_position_c.y = std::max(camera_position_c.y, -0.9f);
         glUniform4f(g_camera_position_uniform, camera_position_c.x, camera_position_c.y, camera_position_c.z, camera_position_c.w);
 
+        printf("camera_position x = %f, y = %f, z = %f\n", camera_position_c.x, camera_position_c.y, camera_position_c.z);
         // Cálculos bezier
         float current_time = (float)glfwGetTime();
         float delta_time = current_time - last_time;
@@ -471,7 +472,7 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -1000.0f; // Posição do "far plane"
+        float farplane  = -100.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -503,7 +504,7 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
         
         // Chão
-        model = Matrix_Translate(g_BunnyPosition.x, -1.0f, g_BunnyPosition.z) * Matrix_Scale(200.0f, 200.0f, 200.0f);
+        model = Matrix_Translate(g_BunnyPosition.x, -1.0f, g_BunnyPosition.z) * Matrix_Scale(50.0f, 50.0f, 50.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("plane");
@@ -515,7 +516,7 @@ int main(int argc, char* argv[])
         // Usa o modelo de esfera pra calcular o céu
         // Movimenta ele junto com a camera
         model = Matrix_Translate(camera_position_c.x, camera_position_c.y, camera_position_c.z)
-                                   * Matrix_Scale(200.0f, 200.0f, 200.0f); // Ajustar conforme necessário
+                                   * Matrix_Scale(20.0f, 20.0f, 20.0f); // Ajustar conforme necessário
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, SKY_SPHERE);
         DrawVirtualObject("sky"); 
@@ -754,8 +755,8 @@ void LoadTextureImage(const char* filename)
     glGenSamplers(1, &sampler_id);
 
     // Veja slides 95-96 do documento Aula_20_Mapeamento_de_Texturas.pdf
-    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     // Parâmetros de amostragem da textura.
     glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
