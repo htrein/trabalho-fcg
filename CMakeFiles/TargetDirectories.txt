@@ -1,4 +1,0 @@
-/home/henrique-trein/trabalho-fcg/CMakeFiles/main.dir
-/home/henrique-trein/trabalho-fcg/CMakeFiles/run.dir
-/home/henrique-trein/trabalho-fcg/CMakeFiles/edit_cache.dir
-/home/henrique-trein/trabalho-fcg/CMakeFiles/rebuild_cache.dir

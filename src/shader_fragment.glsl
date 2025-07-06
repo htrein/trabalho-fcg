@@ -27,9 +27,11 @@ uniform sampler2D TextureImage5;
 uniform sampler2D TextureImage6;
 
 // Identificador que define qual objeto está sendo desenhado no momento
+#define SPHERE 0
 #define BUNNY  1
 #define PLANE  2
 #define CHAIR 3
+// NOVO
 #define SKY_SPHERE 4
 #define BOX 5
 #define SOCCER_BALL 6
@@ -40,6 +42,7 @@ uniform int object_id;
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
 
+// NOVO
 // Constantes
 #define M_PI   3.14159265358979323846
 #define M_PI_2 1.57079632679489661923
@@ -79,7 +82,15 @@ void main()
 
     vec4 h = normalize(v + l); //vetor para BLinn-Phong
 
-    if ( object_id == BUNNY )
+    if ( object_id == SPHERE )
+    {
+        // Propriedades espectrais da esfera
+        Kd = vec3(0.8,0.4,0.08);
+        Ks = vec3(0.0,0.0,0.0);
+        Ka = Kd * 0.5;
+        q = 1.0;
+    }
+    else if ( object_id == BUNNY )
     {
         // Propriedades espectrais do coelho
         Kd = vec3(1.0, 1.0, 1.0);
@@ -143,56 +154,61 @@ void main()
     // Termo especular utilizando Blinn-Phong
     vec3 blinn_phong_specular_term = Ks * I * pow(max(0.0, dot(n.xyz, h.xyz)), q);
 
+    // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
+    // necessário:
+    // 1) Habilitar a operação de "blending" de OpenGL logo antes de realizar o
+    //    desenho dos objetos transparentes, com os comandos abaixo no código C++:
+    //      glEnable(GL_BLEND);
+    //      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // 2) Realizar o desenho de todos objetos transparentes *após* ter desenhado
+    //    todos os objetos opacos; e
+    // 3) Realizar o desenho de objetos transparentes ordenados de acordo com
+    //    suas distâncias para a câmera (desenhando primeiro objetos
+    //    transparentes que estão mais longe da câmera).
+    // Alpha default = 1 = 100% opaco = 0% transparente
     color.a = 1;
 
-    // Coordenadas de textura U e V
-    float U = 0.0;
-    float V = 0.0;
     vec3 tex_obj;
+    vec2 final_texcoords = texcoords;
+
+    if (object_id == PLANE)
+    {
+        // Para o plano, usamos as coordenadas de mundo para que a textura pareça estática.
+        // O fator 0.1 serve para escalar a textura (deixe-a maior).
+        final_texcoords = position_world.xz * 0.1;
+    }
 
     if (object_id == BUNNY) {
-        U = texcoords.x;
-        V = texcoords.y;
-        tex_obj = texture(TextureImage0, vec2(U,V)).rgb;
+        tex_obj = texture(TextureImage0, final_texcoords).rgb;
     } else if ( object_id == CHAIR){
-        U = texcoords.x;
-        V = texcoords.y;
-        tex_obj = texture(TextureImage1, vec2(U,V)).rgb;
+        tex_obj = texture(TextureImage1, final_texcoords).rgb;
     } else if (object_id == SKY_SPHERE) {
         float sphere_rho = 1;
         vec4 camera_pos_a = vec4(camera_pos.x, camera_pos.y, camera_pos.z, 1);
         vec4 p_line = camera_pos_a + sphere_rho*normalize(position_model - camera_pos_a);
         vec4 p_vector = p_line - camera_pos;
-
         float sphere_theta = atan(p_vector[0], p_vector[2]);
         float sphere_psi = asin(p_vector[1]/sphere_rho);
-
-        U = (sphere_theta + M_PI) / (2*M_PI);
-        V = (sphere_psi + M_PI_2)/ M_PI;
-
-        tex_obj = texture(TextureImage2, vec2(U,V)).rgb;
+        tex_obj = texture(TextureImage2, vec2((sphere_theta + M_PI) / (2*M_PI), (sphere_psi + M_PI_2)/ M_PI)).rgb;
     } else if (object_id == BOX) {
-        U = texcoords.x;
-        V = texcoords.y;
-        tex_obj = texture(TextureImage3, vec2(U,V)).rgb;
+        tex_obj = texture(TextureImage3, final_texcoords).rgb;
     } else if (object_id == SOCCER_BALL) {
-        U = texcoords.x;
-        V = texcoords.y;
-        tex_obj = texture(TextureImage4, vec2(U,V)).rgb;
+        tex_obj = texture(TextureImage4, final_texcoords).rgb;
     } else if(object_id == PLANE){
-        U = texcoords.x;
-        V = texcoords.y;
-        tex_obj = texture(TextureImage5, vec2(U,V)).rgb;
+        tex_obj = texture(TextureImage5, final_texcoords).rgb;
     } else if (object_id == CARROT) {
-        U = texcoords.x;
-        V = texcoords.y;
-        tex_obj = texture(TextureImage6, vec2(U,V)).rgb;
+        tex_obj = texture(TextureImage6, final_texcoords).rgb;
     }
 
     if (object_id == SKY_SPHERE)
     {
         color.rgb = tex_obj;
-    } else
+    }
+    else if (object_id == SPHERE)
+    {
+        color.rgb = ambient_term + lambert_diffuse_term + blinn_phong_specular_term;
+    }
+    else
     {
         vec3 textured_ambient = tex_obj * ambient_term;
         vec3 textured_diffuse = tex_obj * lambert_diffuse_term;
