@@ -161,6 +161,7 @@ GLint g_camera_position_uniform;
 bool firstpCamera = false;
 glm::vec3 g_BunnyPosition = glm::vec3(3.0f, -1.0f, 0.0f);
 float g_BunnySpeed = 2.0f;
+float g_BunnyScale = 1.0f;
 
 //Curva de Bezier Obstáculos
 glm::vec3 bezier_p0 = glm::vec3(8.0f, 2.8f, 0.0f);   
@@ -374,7 +375,12 @@ int main(int argc, char* argv[])
         glm::vec4 camera_position_c, camera_lookat_l, camera_view_vector, camera_up_vector;
         camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
         if(firstpCamera){
-            camera_position_c = glm::vec4(g_BunnyPosition.x, g_BunnyPosition.y + 0.5f, g_BunnyPosition.z, 1.0f);
+            camera_position_c = glm::vec4(
+                g_BunnyPosition.x,
+                g_BunnyPosition.y + 0.5f * g_BunnyScale,
+                g_BunnyPosition.z,
+                1.0f
+            );
             camera_view_vector = -(glm::vec4(x,y,z,0.0f));
             camera_lookat_l = camera_position_c + glm::vec4(x,y,z,0.0f);
         } else {
@@ -438,6 +444,7 @@ int main(int argc, char* argv[])
         static float jump_velocity = 0.0f;
         const float gravity = 9.8f;
         const float jump_strength = 7.0f; //varíavel importante pra adaptar a dificuldade do jogo
+        float final_jump_strength = jump_strength / (0.7f + 0.3f * g_BunnyScale);
 
         if (jumping)
         {
@@ -517,6 +524,7 @@ int main(int argc, char* argv[])
         DrawVirtualObject("soccer_ball"); 
 
         glm::mat4 transform_bunny = Matrix_Translate(g_BunnyPosition.x, g_BunnyPosition.y, g_BunnyPosition.z)
+            * Matrix_Scale(g_BunnyScale, g_BunnyScale, g_BunnyScale)   
             * Matrix_Rotate_Z(g_AngleZ)
             * Matrix_Rotate_Y(g_AngleY)
             * Matrix_Rotate_X(g_AngleX);
@@ -647,6 +655,7 @@ int main(int argc, char* argv[])
                 if (AABBCollision(bunny_min, bunny_max, carrot_min, carrot_max)) {
                     carrots_collected[i] = true;  
                     score += 100;  
+
                 }
             }
         }
@@ -684,7 +693,7 @@ int main(int argc, char* argv[])
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !jumping && (g_BunnyPosition.y <= 0.0f || on_top))
         {
             jumping = true;
-            jump_velocity = jump_strength;
+            jump_velocity = final_jump_strength;
         }
         //atualiza posicao
         previous_bunny_position = g_BunnyPosition;
@@ -1186,7 +1195,10 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 // tecla do teclado. Veja http://www.glfw.org/docs/latest/input_guide.html#input_key
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 {
-
+    if (key == GLFW_KEY_COMMA && (action == GLFW_PRESS || action == GLFW_REPEAT)) 
+        g_BunnyScale = std::max(0.1f, g_BunnyScale - 0.1f);
+    if (key == GLFW_KEY_PERIOD && (action == GLFW_PRESS || action == GLFW_REPEAT)) 
+        g_BunnyScale = std::min(2.5f, g_BunnyScale + 0.1f);
     // Se o usuário pressionar a tecla ESC, fechamos a janela.
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
