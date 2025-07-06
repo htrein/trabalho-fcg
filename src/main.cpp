@@ -44,7 +44,7 @@
 #include "utils.h"
 #include "collisions.hpp"
 #include "object.hpp"
-#include "coliders.hpp"
+#include "colliders.hpp"
 #include "boundingBox.hpp"
 
 
@@ -320,6 +320,8 @@ int main(int argc, char* argv[])
     ObjModel chair = ComputeObject("../../data/leather_chair.obj", &g_VirtualScene);
     ColliderBox chair_limits = createBoundingBox(chair.attrib);
     chair_limits.pos = glm::vec3(-2.0f, -1.0f, 0.0f);
+    chair_limits.bbox_min *= glm::vec3(2.0f, 1.0f, 2.0f);
+    chair_limits.bbox_max *= glm::vec3(2.0f, 1.0f, 2.0f);
     box_colliders.push_back(chair_limits);
     
     if ( argc > 1 )
@@ -408,8 +410,10 @@ int main(int argc, char* argv[])
         glm::vec3 right_vector = glm::normalize(glm::cross(front_vector, glm::vec3(0.0f, 1.0f, 0.0f)));
         float camera_speed = g_BunnySpeed * delta_time;
         
-        glm::vec3 move_direction(0.0f);
+        static glm::vec3 previous_bunny_position = g_BunnyPosition;
 
+        glm::vec3 move_direction(0.0f);
+        
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
             g_BunnyPosition += front_vector * camera_speed; move_direction += front_vector;
         }
@@ -486,7 +490,7 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
         
         // Chão
-        model = Matrix_Translate(0.0f, -1.0f, 0.0f) * Matrix_Scale(50.0f, 50.0f, 50.0f);
+        model = Matrix_Translate(0.0f, 1.0f, 0.0f) * Matrix_Scale(50.0f, 50.0f, 50.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("plane");
@@ -608,7 +612,6 @@ int main(int argc, char* argv[])
         drawBoundingBox(chair_limits, transform_chair, g_model_uniform, g_object_id_uniform); 
         
         // Cálculo colisões
-        static glm::vec3 previous_bunny_position = g_BunnyPosition;
         glm::vec3 bunny_min = g_BunnyPosition + bunny_collider.bbox_min;
         glm::vec3 bunny_max = g_BunnyPosition + bunny_collider.bbox_max;
         bool on_top = false; //verifica se o personagem está em cima de um obj
@@ -623,11 +626,16 @@ int main(int argc, char* argv[])
             }
         }
 
-        if(BoxBoxCollision(bunny_collider, chair_limits, transform_bunny, transform_chair)){
-            //collisionTreatmentAABB(&g_BunnyPosition, bunny_collider, chair_limits.bbox_min, chair_limits.bbox_max, previous_bunny_position, folga, &jumping, &on_top, &jump_velocity);
-            printf("c\n");
+        std::pair<glm::vec4, glm::vec4> test_line_plane_collision = std::pair<glm::vec4, glm::vec4>(glm::vec4(-10.0f, 1.0f, -10.0f, 1.0f), glm::vec4(10.0f, 1.0f, 10.0f, 1.0f));
+        if(BoxPlaneCollision(bunny_collider, test_line_plane_collision, transform_bunny, Matrix_Identity())){
+            if(!bunny_collider.collidedWithPlane){
+                printf("c\n");
+                bunny_collider.collidedWithPlane = true;
+            }
+        } else {
+            bunny_collider.collidedWithPlane = false;
         }
-
+        
         //Carrot Collision  
         for (long unsigned int i = 0; i < carrot_colliders.size(); i++) {
             if (!carrots_collected[i]) {  

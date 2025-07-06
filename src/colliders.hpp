@@ -13,6 +13,7 @@ struct ColliderBox{ //estrutura para um objeto colidível cúbico
     glm::vec3 pos;
     glm::vec3 bbox_min;
     glm::vec3 bbox_max;
+    bool collidedWithPlane;
 };
 
 struct ColliderSphere{ //estrutura para um objeto colidível esférico
