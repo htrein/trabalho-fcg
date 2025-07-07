@@ -55,6 +55,7 @@
 #define BOX 5
 #define SOCCER_BALL 6
 #define CARROT 7
+#define BOOK 8
 
 std::vector<ColliderBox> box_colliders; //vetor de objetos colidíveis
 std::vector<ColliderSphere> sphere_colliders;
@@ -264,6 +265,7 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/Textures/Football_Diffuse.jpg"); // TextureImage4
     LoadTextureImage("../../data/Textures/plane.jpg"); // TextureImage5
     LoadTextureImage("../../data/Textures/Carrot_v01.jpg"); //TextureImage6
+    LoadTextureImage("../../data/Textures/book.bmp"); //TextureIMage7
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ComputeObject("../../data/sphere.obj", &g_VirtualScene);
@@ -271,6 +273,8 @@ int main(int argc, char* argv[])
     ComputeObject("../../data/plane.obj", &g_VirtualScene);
     
     ObjModel carrotmodel = ComputeObject("../../data/carrot.obj", &g_VirtualScene);
+
+    ObjModel book = ComputeObject("../../data/book.obj", &g_VirtualScene);
 
     ObjModel bunnymodel = ComputeObject("../../data/hare.obj", &g_VirtualScene);
     ColliderBox bunny_collider = createBoundingBox(bunnymodel.attrib);
@@ -327,7 +331,7 @@ int main(int argc, char* argv[])
     chair_limits.bbox_min *= glm::vec3(2.0f, 1.0f, 2.0f);
     chair_limits.bbox_max *= glm::vec3(2.0f, 1.0f, 2.0f);
     box_colliders.push_back(chair_limits);
-    
+
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
@@ -580,8 +584,7 @@ int main(int argc, char* argv[])
 
             PopMatrix(model2);
         }
-
-        glm::vec3 last_pos = box_colliders[4].pos;
+        glm::vec3 last_spiral_pos = box_colliders[9].pos;
         float last_scale = 0.3f - 4 * 0.05f;
         float spiral_radius = 2.0f;
         float spiral_angle_step = glm::radians(60.0f);
@@ -615,6 +618,21 @@ int main(int argc, char* argv[])
                 glUniform1i(g_object_id_uniform, CARROT);
                 DrawVirtualObject("10170_Carrot_v01");
             }
+        }
+        //Books
+        float book_spacing = 3.0f; 
+        float book_scale = 0.6f;
+        float books_y = last_spiral_pos.y;
+        float books_z = last_spiral_pos.z;
+        for (int i = 0; i < 3; ++i) {
+            glm::vec3 book_pos = last_spiral_pos + glm::vec3((i + 1) * book_spacing, 0.0f, 0.0f);
+            book_pos.y = books_y;
+            book_pos.z = books_z;
+            glm::mat4 book_model = Matrix_Translate(book_pos.x, book_pos.y, book_pos.z)
+                                * Matrix_Scale(book_scale, book_scale, book_scale);
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(book_model));
+            glUniform1i(g_object_id_uniform, BOOK);
+            DrawVirtualObject("polySurface1");
         }
 
         // Cadeira
@@ -855,6 +873,7 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage4"), 4);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage5"), 5);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage6"), 6);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage7"), 7);
     glUseProgram(0);
 }
 
