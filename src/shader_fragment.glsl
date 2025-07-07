@@ -25,6 +25,7 @@ uniform sampler2D TextureImage3;
 uniform sampler2D TextureImage4;
 uniform sampler2D TextureImage5;
 uniform sampler2D TextureImage6;
+uniform sampler2D TextureImage7;
 
 // Identificador que define qual objeto está sendo desenhado no momento
 #define SPHERE 0
@@ -36,6 +37,7 @@ uniform sampler2D TextureImage6;
 #define BOX 5
 #define SOCCER_BALL 6
 #define CARROT 7
+#define BOOK 8
 
 uniform int object_id;
 
@@ -131,6 +133,12 @@ void main()
         Ka = Kd * 0.2;
         q = 16.0;
     }
+    else if (object_id == BOOK){
+        Kd = vec3(1.0, 1.0, 1.0);
+        Ks = vec3(0.2, 0.2, 0.2);
+        Ka = Kd * 0.2;
+        q = 16.0;
+    }
     else // Objeto desconhecido = preto
     {
         Kd = vec3(0.0,0.0,0.0);
@@ -198,6 +206,8 @@ void main()
         tex_obj = texture(TextureImage5, final_texcoords).rgb;
     } else if (object_id == CARROT) {
         tex_obj = texture(TextureImage6, final_texcoords).rgb;
+    } else if (object_id == BOOK) {
+        tex_obj = texture(TextureImage7, final_texcoords).rgb; 
     }
 
     if (object_id == SKY_SPHERE)
