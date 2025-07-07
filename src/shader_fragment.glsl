@@ -183,7 +183,7 @@ void main()
     {
         // Para o plano, usamos as coordenadas de mundo para que a textura pareça estática.
         // O fator 0.1 serve para escalar a textura (deixe-a maior).
-        final_texcoords = position_world.xz * 0.1;
+        final_texcoords = position_world.xz * 0.01;
     }
 
     if (object_id == BUNNY) {
