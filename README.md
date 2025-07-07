@@ -21,19 +21,28 @@
 utilizei principalmente o Gemini para saber a melhor maneira de implementar uma funcionalidade (e.g Ambient Mapping), para revisar/debugar (e.g box-box collision) e para criar funcionalidades (e.g sphere-box collision). Neste último caso, sempre tentei compreender o código gerado. Dentro da IDE, usei para completar códigos "óbvios" (e.g "printf(x = %f)" já completava com as demais coordenadas do objeto).
 ### Henrique:
 uso de IA para o auxílio na construção de uma parcela do percurso em espiral, auxílio na dinâmica do pulo do coelho, função de mostrar score na tela. Questões de sintaxe das bibliotecas OpenGL/GLM;
+### Conclusões:
+A IA auxiliou na depuração de problemas, velocidade de implementação, optimização de funcionalidades e questões de sintaxe. Questões de posicionamento de objetos no mundo, aparentemente, foi onde houve maiores dificuldades.
 
 ## Descrição dos conceitos de CG implementados:
 No total, os conceitos da disciplinas que foram implementados foram:
-- Transformações geométricas;
+- Transformações geométricas controladas pelo usuário = aumento/diminuição de tamanho do coelho;
 - Sistemas de coordenadas e transformações de um para outro;
-- Projeções;
-- Curvas de Bézier aplicadas em animação;
-- Cor;
-- Iluminação (de objeto e mundo);
-- Colisões;
-- Texturas;
+- Câmera livre e look-at = visão de primeira e terceira pessoa do coelho;
+- 3 tipos de intersecção/colisão: 
+- - Box-Box: coelho com as caixas, com a cadeira e com as cenouras
+- - Box-Sphere: coelho com a bola de futebol
+- - Box-Plane: coelho com os livros
+- Projeções = câmera;
+- Curvas de Bézier e animação baseada em tempo = aplicadas em animação para a bola de futebol;
+- Iluminação Difusa e Blinn-Phong e interpolação Phong = todos os objetos menos a cenoura;
+- Interpolação de Gouraud = cenoura;
+- Texturas = todos os objetos;
+- Malhas poligonais complexas = todos os objetos;
 
 ## Imagens do jogo:
+
+
 
 ## Como jogar:
 - WASD para movimento do coelho;

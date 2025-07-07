@@ -180,7 +180,7 @@ int bezier_direction = 1;
 
 //Sistema de Pontuação
 int score = 0;
-std::vector<bool> carrots_collected(10, false);
+std::vector<bool> carrots_collected(13, false);
 void TextRendering_ShowScore(GLFWwindow* window);
 //------
 
@@ -281,10 +281,17 @@ int main(int argc, char* argv[])
     
     ObjModel soccer_ball = ComputeObject("../../data/soccer_ball.obj", &g_VirtualScene);
     ColliderSphere collider_soccer = createBoundingSphereRitter(soccer_ball.attrib);
-    sphere_colliders.push_back(collider_soccer);
 
     ObjModel boxmodel = ComputeObject("../../data/woodenCrate.obj", &g_VirtualScene);
     ColliderBox box_limits = createBoundingBox(boxmodel.attrib);
+
+    ObjModel chair = ComputeObject("../../data/leather_chair.obj", &g_VirtualScene);
+    ColliderBox chair_limits = createBoundingBox(chair.attrib);
+
+    // Bola de futebol
+    sphere_colliders.push_back(collider_soccer);
+
+    // Primeiro bloco de caixas + cenouras linear
     float base_scale = 0.3f;
     float base_spacing = 1.0f;
     float step_height = 0.9f;
@@ -300,13 +307,12 @@ int main(int argc, char* argv[])
         glm::vec3 carrot_pos(i * spacing, step_height + 0.5f, 0.0f);
         carrot_colliders.push_back({carrot_pos, carrot_bbox_min, carrot_bbox_max});
     }
-
+    // Segundo bloco de caixas + cenouras em espiral 
     glm::vec3 last_pos = box_colliders.back().pos;
     float last_scale = base_scale - 4 * 0.05f; 
     float spiral_radius = 2.0f; 
     float spiral_angle_step = glm::radians(60.0f); 
     float spiral_height_step = 1.3f; 
-
     for (int i = 0; i < 5; ++i) {
         float scale = std::max(0.05f, last_scale - i * 0.05f);
         float angle = i * spiral_angle_step;
@@ -324,9 +330,22 @@ int main(int argc, char* argv[])
         glm::vec3 carrot_pos = pos + glm::vec3(0.0f, 0.5f + scale * 7.0f, 0.0f);
         carrot_colliders.push_back({carrot_pos, carrot_bbox_min, carrot_bbox_max});
     }
+    // Cenouras em cima dos livros
+    float book_spacing = 3.0f;
+    float book_scale = 0.6f;
+    glm::vec3 last_spiral_pos = box_colliders[9].pos; 
+    for (int i = 0; i < 3; ++i) {
+        glm::vec3 book_pos = last_spiral_pos + glm::vec3((i + 1) * book_spacing, 0.0f, 0.0f);
+        book_pos.y = last_spiral_pos.y;
+        book_pos.z = last_spiral_pos.z;
+        glm::vec3 carrot_bbox_min = glm::vec3(-0.3f, -0.3f, -0.3f);
+        glm::vec3 carrot_bbox_max = glm::vec3(0.3f, 0.3f, 0.3f);
+        glm::vec3 carrot_pos = book_pos + glm::vec3(0.0f, 1.0f * book_scale, 0.0f);
+        carrot_colliders.push_back({carrot_pos, carrot_bbox_min, carrot_bbox_max});
+        carrots_collected.push_back(false);
+    }
 
-    ObjModel chair = ComputeObject("../../data/leather_chair.obj", &g_VirtualScene);
-    ColliderBox chair_limits = createBoundingBox(chair.attrib);
+    // Cadeira de couro
     chair_limits.pos = glm::vec3(-4.0f, -1.0f, 0.0f);
     chair_limits.bbox_min *= glm::vec3(2.0f, 1.0f, 2.0f);
     chair_limits.bbox_max *= glm::vec3(2.0f, 1.0f, 2.0f);
@@ -625,6 +644,7 @@ int main(int argc, char* argv[])
         float book_scale = 0.6f;
         float books_y = last_spiral_pos.y;
         float books_z = last_spiral_pos.z;
+        int first_carrot_idx = 10;
         for (int i = 0; i < 3; ++i) {
             glm::vec3 book_pos = last_spiral_pos + glm::vec3((i + 1) * book_spacing, 0.0f, 0.0f);
             book_pos.y = books_y;
@@ -636,6 +656,16 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(book_model));
             glUniform1i(g_object_id_uniform, BOOK);
             DrawVirtualObject("polySurface1");
+            
+            int carrot_idx = first_carrot_idx + i;
+            if (!carrots_collected[carrot_idx]) {
+                glm::mat4 carrot_model = Matrix_Translate(book_pos.x, book_pos.y + 1.0f * book_scale, book_pos.z)
+                                    * Matrix_Scale(0.005f, 0.005f, 0.005f)
+                                    * Matrix_Rotate_X(-3.141592f/2.0f);
+                glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(carrot_model));
+                glUniform1i(g_object_id_uniform, CARROT);
+                DrawVirtualObject("10170_Carrot_v01");
+    }
         }
 
         // Cadeira
