@@ -30,7 +30,7 @@ ColliderBox createBoundingBox(const tinyobj::attrib_t& atrib){
 // Criacao de uma bounding-sphere baseado no metodo de Ritter (escolhido por ser mais preciso)
 ColliderSphere createBoundingSphereRitter(const tinyobj::attrib_t& attrib) {
     if (attrib.vertices.empty()) {
-        return {glm::vec3(0.0f), 0.0f};
+        return {glm::vec4(0.0f), 0.0f};
     }
 
     glm::vec3 first_pt(attrib.vertices[0], attrib.vertices[1], attrib.vertices[2]);
@@ -83,7 +83,7 @@ ColliderSphere createBoundingSphereRitter(const tinyobj::attrib_t& attrib) {
         }
     }
 
-    return {center, radius};
+    return {glm::vec4(center, 1.0f), radius, glm::mat4(1.0f)};
 }
 
 ColliderPlane createTopPlane(const tinyobj::attrib_t& atrib, glm::mat4 plane_transform){

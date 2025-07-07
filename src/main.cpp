@@ -4,19 +4,11 @@
 //
 //    INF01047 Fundamentos de Computação Gráfica
 //               Prof. Eduardo Gastal
-//
-// Arquivos "headers" padrões de C podem ser incluídos em um
-// programa C++, sendo necessário somente adicionar o caractere
-// "c" antes de seu nome, e remover o sufixo ".h". Exemplo:
-//    #include <stdio.h> // Em C
-//  vira
-//    #include <cstdio> // Em C++
-//
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 
-// Headers abaixo são específicos de C++
 #include <map>
 #include <stack>
 #include <string>
@@ -27,7 +19,6 @@
 #include <stdexcept>
 #include <algorithm>
 
-// Headers das bibliotecas OpenGL
 #include <glad/glad.h>   // Criação de contexto OpenGL 3.3
 #include <GLFW/glfw3.h>  // Criação de janelas do sistema operacional
 
@@ -213,7 +204,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "Jogo sem nome", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "Basically Up", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -373,6 +364,7 @@ int main(int argc, char* argv[])
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
+        // FONTE https://www.reddit.com/r/opengl/comments/24v86a/glfw3_hiding_the_mousecursor_help/
         // Oculta o cursor
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
@@ -521,12 +513,12 @@ int main(int argc, char* argv[])
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
         // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
         // efetivamente aplicadas em todos os pontos.
-        glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(view));
-        glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
+        glUniformMatrix4fv(g_view_uniform, 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(g_projection_uniform, 1, GL_FALSE, glm::value_ptr(projection));
         
         // Chão
         model = Matrix_Translate(g_BunnyPosition.x, -1.0f, g_BunnyPosition.z) * Matrix_Scale(500.0f, 500.0f, 500.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("plane");
         
@@ -538,7 +530,7 @@ int main(int argc, char* argv[])
         // Movimenta ele junto com a camera
         model = Matrix_Translate(camera_position_c.x, camera_position_c.y, camera_position_c.z)
                                    * Matrix_Scale(200.0f, 200.0f, 200.0f); // Ajustar conforme necessário
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, SKY_SPHERE);
         DrawVirtualObject("sky"); 
 
@@ -546,7 +538,9 @@ int main(int argc, char* argv[])
         glDepthMask(GL_TRUE); // Faz voltar os parâmetros originais
 
         // Bola de futebol
-        glm::mat4 model_obstacle = Matrix_Translate(soccer_ball_pos.x, soccer_ball_pos.y, soccer_ball_pos.z) * Matrix_Scale(2.0f, 2.0f, 2.0f);
+        glm::mat4 transform_soccer = Matrix_Translate(soccer_ball_pos.x, soccer_ball_pos.y, soccer_ball_pos.z) * Matrix_Scale(2.0f, 2.0f, 2.0f);
+        glm::mat4 model_obstacle = transform_soccer;
+        sphere_colliders[0].sphere_transform = transform_soccer;
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model_obstacle));
         glUniform1i(g_object_id_uniform, SOCCER_BALL); 
         DrawVirtualObject("soccer_ball"); 
@@ -559,7 +553,7 @@ int main(int argc, char* argv[])
         if (!firstpCamera)  
         {
             model = transform_bunny;
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, BUNNY);
             DrawVirtualObject("hare");
         }   
@@ -671,7 +665,7 @@ int main(int argc, char* argv[])
         // Cadeira
         glm::mat4 transform_chair = Matrix_Translate(-4.0f, -1.0f, 0.0f) * Matrix_Scale(2.0f, 1.0f, 2.0f);
         model = transform_chair;
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, CHAIR);
         DrawVirtualObject("leather_chair");
         //drawBoundingBox(chair_limits, transform_chair, g_model_uniform, g_object_id_uniform); 
@@ -690,30 +684,14 @@ int main(int argc, char* argv[])
             glm::vec3 obj_min = col.pos + col.bbox_min;
             glm::vec3 obj_max = col.pos + col.bbox_max;
             if (AABBCollision(bunny_min, bunny_max, obj_min, obj_max)) {
-                // Se o coelho estava acima do objeto, mas seu limite inferior já estava dentro
-                collisionTreatmentAABB(&g_BunnyPosition, scaled_bunny_collider, obj_min, obj_max, previous_bunny_position, folga, &jumping, &on_top, &jump_velocity);
+                collisionTreatmentBoxBunny(&g_BunnyPosition, scaled_bunny_collider, obj_min, obj_max, previous_bunny_position, folga, &jumping, &on_top, &jump_velocity);
             }
         }
 
         for(const auto& col : plane_colliders){
             // Teste da colisão dos planos
             if(BoxPlaneCollision(bunny_collider, col.plane_limits_local, transform_bunny, col.plane_transform)){
-                
-                // A posicão estará INCORRETA, mas como só o y é necessário, seguimos
-                glm::vec4 plane_pos_in_world = col.plane_transform * col.plane_limits_local.first;
-                glm::vec4 plane_pos_in_bunny = glm::inverse(transform_bunny) * plane_pos_in_world;
-                // Se estava abaixo
-                if(plane_pos_in_bunny.y > bunny_collider.pos.y + folga * 50){
-                    jump_velocity = 0.0f;
-                    g_BunnyPosition = Matrix_Translate(0.0f, -0.07f, 0.0f) * glm::vec4(g_BunnyPosition, 1.0f);
-                } else {
-                    g_BunnyPosition = Matrix_Translate(0.0f, folga / 10, 0.0f) * glm::vec4(g_BunnyPosition, 1.0f);;
-                    if (jump_velocity <= 0.0f) {
-                        jumping = false;
-                        jump_velocity = 0.0f;
-                        on_top = true;
-                    }
-                }
+                collisionTreatmentPlaneBunny(&g_BunnyPosition, bunny_collider, col, transform_bunny, col.plane_transform, folga, &jumping, &on_top, &jump_velocity);
             }
             
         }
@@ -736,27 +714,7 @@ int main(int argc, char* argv[])
         }
         // Iterador dos colliders
         for (auto& col : sphere_colliders) {
-            // Colisor no espaco do mundo
-            glm::vec3 sphere_world_center = soccer_ball_pos + col.pos;
-
-            glm::vec3 sphere_center_in_bunny_local = sphere_world_center - g_BunnyPosition;
-            
-            glm::vec3 intersection_point; 
-
-            if (SphereBoxCollision(sphere_center_in_bunny_local, col.radius, bunny_collider, &intersection_point)) {
-                // Se está abaixo da bola
-                if(sphere_center_in_bunny_local.y > 1.0f){
-                    jump_velocity = 0.0f;
-                    g_BunnyPosition = Matrix_Translate(0.0f, -0.07f, 0.0f) * glm::vec4(g_BunnyPosition, 1.0f);
-                } else {
-                    g_BunnyPosition.y = (g_BunnyPosition.y + intersection_point.y) - bunny_collider.bbox_min.y;
-                    if (jump_velocity <= 0.0f) {
-                        jumping = false;
-                        jump_velocity = 0.0f;
-                        on_top = true;
-                    }
-                }
-            }
+            collisionTreatmentSphereBunny(&g_BunnyPosition, bunny_collider, col, &jumping, &on_top, &jump_velocity);
         }
 
         //queda

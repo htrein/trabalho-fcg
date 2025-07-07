@@ -16,8 +16,9 @@ struct ColliderBox{ //estrutura para um objeto colidível cúbico
 };
 
 struct ColliderSphere{ //estrutura para um objeto colidível esférico
-    glm::vec3 pos;
+    glm::vec4 pos;
     float radius;
+    glm::mat4 sphere_transform;
 };
 
 struct ColliderPlane{ //estrutura para um objeto colidível esférico

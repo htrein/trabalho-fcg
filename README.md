@@ -22,7 +22,7 @@ utilizei principalmente o Gemini para saber a melhor maneira de implementar uma 
 ### Henrique:
 uso de IA para o auxílio na construção de uma parcela do percurso em espiral, auxílio na dinâmica do pulo do coelho, função de mostrar score na tela. Questões de sintaxe das bibliotecas OpenGL/GLM;
 ### Conclusões:
-A IA auxiliou na depuração de problemas, velocidade de implementação, optimização de funcionalidades e questões de sintaxe. Questões de posicionamento de objetos no mundo, aparentemente, foi onde houve maiores dificuldades.
+A IA auxiliou na depuração de problemas, velocidade de implementação, optimização de funcionalidades e questões de sintaxe. Questões de posicionamento de objetos no mundo, aparentemente, foi onde houve maiores dificuldades. Vale citar também a falta de acertividade para quetões mais situacionais, a IA sabia bem falar da teoria, mas a aplicação era falha. Cenários de tentativa e erro aconteceram com certa frequência.
 
 ## Descrição dos conceitos de CG implementados:
 No total, os conceitos da disciplinas que foram implementados foram:

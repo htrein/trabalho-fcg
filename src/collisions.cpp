@@ -40,6 +40,9 @@ bool SphereBoxCollision(glm::vec3& center, float radius, ColliderBox box, glm::v
     return distance_squared < (radius * radius);
 }
 
+// As tentativas de implementar a box-box passaram disto
+// FONTE https://stackoverflow.com/questions/62028169/how-to-detect-when-rotated-rectangles-are-colliding-each-other
+// Para utilizar o Separating Axis Theorem (com ajuda do Gemini, o que também falhou)
 bool BoxBoxCollision(ColliderBox box1, ColliderBox box2, glm::mat4 col1_transform, glm::mat4 col2_transform){
     std::vector<glm::vec4> box_corners1 = cornersOfBox(box1);
     std::vector<glm::vec4> box_corners2 = cornersOfBox(box2);
@@ -141,7 +144,7 @@ std::vector<glm::vec4> getBoxNormals() {
     return normals;
 }
 
-void collisionTreatmentAABB(glm::vec3* g_BunnyPosition, ColliderBox bunny_limits, glm::vec3 obj_min, glm::vec3 obj_max, glm::vec3 previous_bunny_position, float folga, bool* jumping, bool* on_top, float* jump_velocity){
+void collisionTreatmentBoxBunny(glm::vec3* g_BunnyPosition, ColliderBox bunny_limits, glm::vec3 obj_min, glm::vec3 obj_max, glm::vec3 previous_bunny_position, float folga, bool* jumping, bool* on_top, float* jump_velocity){
     glm::vec3 bunny_min = *g_BunnyPosition + bunny_limits.bbox_min;
     
     // Se o coelho estava acima do objeto, mas seu limite inferior já estava dentro
@@ -172,7 +175,8 @@ void collisionTreatmentAABB(glm::vec3* g_BunnyPosition, ColliderBox bunny_limits
             (*g_BunnyPosition).z = previous_bunny_position.z;
             return;
         }
-        *g_BunnyPosition = previous_bunny_position;
+        *jump_velocity = 0.0f;
+        *g_BunnyPosition = Matrix_Translate(0.0f, -0.07f, 0.0f) * glm::vec4(*g_BunnyPosition, 1.0f);
     }
 }
 
@@ -220,3 +224,43 @@ bool BoxPlaneCollision(const ColliderBox& box, const std::pair<glm::vec4, glm::v
     return overlap_x && overlap_z;
 }
 
+void collisionTreatmentPlaneBunny(glm::vec3* g_BunnyPosition, ColliderBox bunny_collider, ColliderPlane plane, glm::mat4 transform_bunny, glm::mat4 transform_plane, float folga, bool* jumping, bool* on_top, float* jump_velocity){
+    // A posicão estará INCORRETA, mas como só o y é necessário, seguimos
+    glm::vec4 plane_pos_in_world = plane.plane_transform * plane.plane_limits_local.first;
+    glm::vec4 plane_pos_in_bunny = glm::inverse(transform_bunny) * plane_pos_in_world;
+
+    // Se estava abaixo
+    if(plane_pos_in_bunny.y > bunny_collider.pos.y + folga * 50){
+        *jump_velocity = 0.0f;
+        *g_BunnyPosition = Matrix_Translate(0.0f, -0.07f, 0.0f) * glm::vec4(*g_BunnyPosition, 1.0f);
+    } else {
+        *g_BunnyPosition = Matrix_Translate(0.0f, folga / 10, 0.0f) * glm::vec4(*g_BunnyPosition, 1.0f);;
+        if (*jump_velocity <= 0.0f) {
+            *jumping = false;
+            *jump_velocity = 0.0f;
+            *on_top = true;
+        }
+    }
+}
+
+void collisionTreatmentSphereBunny(glm::vec3* g_BunnyPosition, ColliderBox bunny_collider, ColliderSphere sphere, bool* jumping, bool* on_top, float* jump_velocity){
+    // Colisor no espaco do mundo
+    glm::vec3 sphere_world_center = sphere.sphere_transform * sphere.pos;
+    glm::vec3 sphere_center_in_bunny_local = sphere_world_center - *g_BunnyPosition;            
+    glm::vec3 intersection_point; 
+
+    if (SphereBoxCollision(sphere_center_in_bunny_local, sphere.radius, bunny_collider, &intersection_point)) {
+        // Se está abaixo da bola
+        if(sphere_center_in_bunny_local.y > 1.0f){
+            *jump_velocity = 0.0f;
+            *g_BunnyPosition = Matrix_Translate(0.0f, -0.07f, 0.0f) * glm::vec4(*g_BunnyPosition, 1.0f);
+        } else {
+            (*g_BunnyPosition).y = ((*g_BunnyPosition).y + intersection_point.y) - bunny_collider.bbox_min.y;
+            if (*jump_velocity <= 0.0f) {
+                *jumping = false;
+                *jump_velocity = 0.0f;
+                *on_top = true;
+            }
+        }
+    }
+}
