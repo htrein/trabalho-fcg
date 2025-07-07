@@ -13,7 +13,6 @@ struct ColliderBox{ //estrutura para um objeto colidível cúbico
     glm::vec3 pos;
     glm::vec3 bbox_min;
     glm::vec3 bbox_max;
-    bool collidedWithPlane;
 };
 
 struct ColliderSphere{ //estrutura para um objeto colidível esférico
@@ -21,7 +20,13 @@ struct ColliderSphere{ //estrutura para um objeto colidível esférico
     float radius;
 };
 
+struct ColliderPlane{ //estrutura para um objeto colidível esférico
+    std::pair<glm::vec4, glm::vec4> plane_limits_local;
+    glm::mat4 plane_transform;
+};
+
 ColliderBox createBoundingBox(const tinyobj::attrib_t& atrib);
 ColliderSphere createBoundingSphereRitter(const tinyobj::attrib_t& atrib);
+ColliderPlane createTopPlane(const tinyobj::attrib_t& atrib, glm::mat4 plane_transform);
 
 #endif

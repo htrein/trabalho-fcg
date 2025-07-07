@@ -147,7 +147,7 @@ void collisionTreatmentAABB(glm::vec3* g_BunnyPosition, ColliderBox bunny_limits
     // Se o coelho estava acima do objeto, mas seu limite inferior já estava dentro
     if (previous_bunny_position.y >= obj_max.y - folga && bunny_min.y < obj_max.y + folga) {
         //y
-        (*g_BunnyPosition).y = obj_max.y - bunny_limits.bbox_min.y;
+        (*g_BunnyPosition).y = obj_max.y;
         if (*jump_velocity <= 0.0f) {
             *jumping = false;
             *jump_velocity = 0.0f;

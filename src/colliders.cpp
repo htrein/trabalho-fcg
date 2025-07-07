@@ -24,7 +24,7 @@ ColliderBox createBoundingBox(const tinyobj::attrib_t& atrib){
     glm::vec3 bbox_max = glm::vec3(max_x, max_y, max_z);
     glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f); //(bbox_min + bbox_max) * 0.5f;
 
-    return {center, bbox_min, bbox_max, false};
+    return {center, bbox_min, bbox_max};
 }
 
 // Criacao de uma bounding-sphere baseado no metodo de Ritter (escolhido por ser mais preciso)
@@ -84,4 +84,31 @@ ColliderSphere createBoundingSphereRitter(const tinyobj::attrib_t& attrib) {
     }
 
     return {center, radius};
+}
+
+ColliderPlane createTopPlane(const tinyobj::attrib_t& atrib, glm::mat4 plane_transform){
+    float min_x = std::numeric_limits<float>::max();
+    float min_z = std::numeric_limits<float>::max();
+    float max_x = std::numeric_limits<float>::lowest();
+    float max_y = std::numeric_limits<float>::lowest();
+    float max_z = std::numeric_limits<float>::lowest();
+    for (size_t i = 0; i < atrib.vertices.size(); i += 3)
+    {
+        float vx = atrib.vertices[i + 0];
+        float vy = atrib.vertices[i + 1];
+        float vz = atrib.vertices[i + 2];
+
+        if (vx < min_x) min_x = vx;
+        if (vz < min_z) min_z = vz;
+        if (vx > max_x) max_x = vx;
+        if (vy > max_y) max_y = vy;
+        if (vz > max_z) max_z = vz;
+    }
+    glm::vec4 min_point = glm::vec4(min_x, max_y, min_z, 1.0f);
+    glm::vec4 max_point = glm::vec4(max_x, max_y, max_z, 1.0f);
+
+    std::pair<glm::vec4, glm::vec4> plane_limits_local = std::make_pair(min_point, max_point);
+    
+
+    return {plane_limits_local, plane_transform};
 }

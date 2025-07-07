@@ -467,7 +467,6 @@ int main(int argc, char* argv[])
                 jump_velocity = 0.0f;
             }
         }
-
         // Projeção
         glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
         glm::mat4 projection;
@@ -619,6 +618,8 @@ int main(int argc, char* argv[])
                 DrawVirtualObject("10170_Carrot_v01");
             }
         }
+        
+        std::vector<ColliderPlane> plane_colliders;
         //Books
         float book_spacing = 3.0f; 
         float book_scale = 0.6f;
@@ -629,7 +630,9 @@ int main(int argc, char* argv[])
             book_pos.y = books_y;
             book_pos.z = books_z;
             glm::mat4 book_model = Matrix_Translate(book_pos.x, book_pos.y, book_pos.z)
-                                * Matrix_Scale(book_scale, book_scale, book_scale);
+                                * Matrix_Scale(book_scale, book_scale, book_scale) * Matrix_Rotate_Z(0.7f);
+            ColliderPlane book_collider = createTopPlane(book.attrib, book_model);
+            plane_colliders.push_back(book_collider);
             glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(book_model));
             glUniform1i(g_object_id_uniform, BOOK);
             DrawVirtualObject("polySurface1");
@@ -651,6 +654,7 @@ int main(int argc, char* argv[])
         glm::vec3 bunny_max = g_BunnyPosition + scaled_bunny_collider.bbox_max;
         bool on_top = false; //verifica se o personagem está em cima de um obj
         const float folga = 0.01f; //folga para evitar jittering
+        
         //para cada objeto colidivel testa se há colisao
         for (const auto& col : box_colliders) {
             glm::vec3 obj_min = col.pos + col.bbox_min;
@@ -659,6 +663,29 @@ int main(int argc, char* argv[])
                 // Se o coelho estava acima do objeto, mas seu limite inferior já estava dentro
                 collisionTreatmentAABB(&g_BunnyPosition, scaled_bunny_collider, obj_min, obj_max, previous_bunny_position, folga, &jumping, &on_top, &jump_velocity);
             }
+        }
+
+        for(const auto& col : plane_colliders){
+            // Teste da colisão dos planos
+            if(BoxPlaneCollision(bunny_collider, col.plane_limits_local, transform_bunny, col.plane_transform)){
+                
+                // A posicão estará INCORRETA, mas como só o y é necessário, seguimos
+                glm::vec4 plane_pos_in_world = col.plane_transform * col.plane_limits_local.first;
+                glm::vec4 plane_pos_in_bunny = glm::inverse(transform_bunny) * plane_pos_in_world;
+                // Se estava abaixo
+                if(plane_pos_in_bunny.y > bunny_collider.pos.y + folga * 50){
+                    jump_velocity = 0.0f;
+                    g_BunnyPosition = Matrix_Translate(0.0f, -0.07f, 0.0f) * glm::vec4(g_BunnyPosition, 1.0f);
+                } else {
+                    g_BunnyPosition = Matrix_Translate(0.0f, folga / 10, 0.0f) * glm::vec4(g_BunnyPosition, 1.0f);;
+                    if (jump_velocity <= 0.0f) {
+                        jumping = false;
+                        jump_velocity = 0.0f;
+                        on_top = true;
+                    }
+                }
+            }
+            
         }
         
         //Carrot Collision  
@@ -674,7 +701,6 @@ int main(int argc, char* argv[])
                 if (AABBCollision(bunny_min, bunny_max, carrot_min, carrot_max)) {
                     carrots_collected[i] = true;  
                     score += 100;  
-
                 }
             }
         }
