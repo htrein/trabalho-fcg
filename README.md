@@ -15,7 +15,6 @@
 - Aplicação da bola de futebol como objeto animado pelo tempo com movimentação por uma curva de Bezier;
 - Blinn-phong e lambert para alguns modelos;
 
-
 ## Relato de uso de ferramentas de IA (ChatGPT, Copilot, etc.):
 ### Alef:
 utilizei principalmente o Gemini para saber a melhor maneira de implementar uma funcionalidade (e.g Ambient Mapping), para revisar/debugar (e.g box-box collision) e para criar funcionalidades (e.g sphere-box collision). Neste último caso, sempre tentei compreender o código gerado. Dentro da IDE, usei para completar códigos "óbvios" (e.g "printf(x = %f)" já completava com as demais coordenadas do objeto).
@@ -41,10 +40,11 @@ No total, os conceitos da disciplinas que foram implementados foram:
 - Malhas poligonais complexas = todos os objetos;
 
 ## Imagens do jogo:
-
-
+![alt text](image.png)
+![alt text](image-1.png)
 
 ## Como jogar:
+Colete todas as cenouras chegando ao topo!
 - WASD para movimento do coelho;
 - Espaço para pular;
 - Mouse para rotacionar a câmera;
