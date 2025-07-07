@@ -143,7 +143,6 @@ std::vector<glm::vec4> getBoxNormals() {
 
 void collisionTreatmentAABB(glm::vec3* g_BunnyPosition, ColliderBox bunny_limits, glm::vec3 obj_min, glm::vec3 obj_max, glm::vec3 previous_bunny_position, float folga, bool* jumping, bool* on_top, float* jump_velocity){
     glm::vec3 bunny_min = *g_BunnyPosition + bunny_limits.bbox_min;
-    glm::vec3 bunny_max = *g_BunnyPosition + bunny_limits.bbox_max;
     
     // Se o coelho estava acima do objeto, mas seu limite inferior já estava dentro
     if (previous_bunny_position.y >= obj_max.y - folga && bunny_min.y < obj_max.y + folga) {
@@ -219,40 +218,5 @@ bool BoxPlaneCollision(const ColliderBox& box, const std::pair<glm::vec4, glm::v
     const bool overlap_z = box_max_aabb.z >= plane_min_z && box_min_aabb.z <= plane_max_z;
 
     return overlap_x && overlap_z;
-}
-void collisionTreatmentBozPlane(glm::vec3* g_BunnyPosition, ColliderBox bunny_limits, glm::vec3 obj_min, glm::vec3 obj_max, glm::vec3 previous_bunny_position, float folga, bool* jumping, bool* on_top, float* jump_velocity){
-    glm::vec3 bunny_min = *g_BunnyPosition + bunny_limits.bbox_min;
-    glm::vec3 bunny_max = *g_BunnyPosition + bunny_limits.bbox_max;
-
-    // Se o coelho estava acima do objeto, mas seu limite inferior já estava dentro
-    if (previous_bunny_position.y >= obj_max.y - folga && bunny_min.y < obj_max.y + folga) {
-        //y
-        (*g_BunnyPosition).y = obj_max.y - bunny_limits.bbox_min.y;
-        if (*jump_velocity <= 0.0f) {
-            *jumping = false;
-            *jump_velocity = 0.0f;
-            *on_top = true;
-        }
-    } else {
-        //x
-        glm::vec3 try_pos = *g_BunnyPosition;
-        try_pos.x = previous_bunny_position.x;
-        glm::vec3 try_min = try_pos + bunny_limits.bbox_min;
-        glm::vec3 try_max = try_pos + bunny_limits.bbox_max;
-        if (!AABBCollision(try_min, try_max, obj_min, obj_max)) {
-            (*g_BunnyPosition).x = previous_bunny_position.x;
-            return;
-        }
-        //z
-        try_pos = *g_BunnyPosition;
-        try_pos.z = previous_bunny_position.z;
-        try_min = try_pos + bunny_limits.bbox_min;
-        try_max = try_pos + bunny_limits.bbox_max;
-        if (!AABBCollision(try_min, try_max, obj_min, obj_max)) {
-            (*g_BunnyPosition).z = previous_bunny_position.z;
-            return;
-        }
-        *g_BunnyPosition = previous_bunny_position;
-    }
 }
 
