@@ -218,6 +218,11 @@ void main()
     {
         color.rgb = ambient_term + lambert_diffuse_term + blinn_phong_specular_term;
     }
+    else if (object_id == SOCCER_BALL)
+    {
+        vec3 textured_diffuse = tex_obj * lambert_diffuse_term;
+        color.rgb = textured_diffuse;
+    }
     else
     {
         vec3 textured_ambient = tex_obj * ambient_term;
